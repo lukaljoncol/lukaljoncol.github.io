@@ -1,0 +1,754 @@
+
+<html>
+<head>
+<title>drew</title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+<script type="text/javascript" src="https://static.codehs.com/gulp/26d66975f8033d706c03933209c633cc0736d9ae/chs-js-lib/chs.js"></script>
+
+
+<style>
+canvas {
+    border: 1px solid black;
+    display: inline-block;
+    vertical-align: top;
+}
+
+pre {
+    border: 1px solid black;
+    display: inline-block;
+    width: 400px;
+    height: 500px;
+    background-color: #F5F5F5;
+}
+</style>
+
+</head>
+
+<body>
+<h1>drew</h1>
+
+
+
+<canvas
+width="400"
+height="500"
+class="codehs-editor-canvas"></canvas>
+<pre id="console"></pre>
+
+<script>
+window.onload = function() {
+
+    setSize(850,750);
+
+
+
+function start()
+{
+    begin();
+}
+
+
+
+
+
+
+
+
+var menu = [];
+var background = new WebImage("https://codehs.com/uploads/e9facb69e4f08f155795bdd82603ac53");
+background.setSize(getWidth(),getHeight());
+add(background);
+menu.push(background);
+var drawArea = new Rectangle(710,710);
+drawArea.setPosition(20,20);
+drawArea.setColor(Color.white);
+add(drawArea);
+
+var canvasX = 20;
+var canvasY = 20;
+
+var canvasXLow = 730;
+var canvasYLow = 730;
+
+var badboycount = 0;
+
+
+//
+
+
+
+var rvalue = 0;
+var gvalue = 0;
+var bvalue = 0;
+var rvaluebg = 255;
+var gvaluebg = 255;
+var bvaluebg = 255;
+var curposX = 0;
+var curposY = 0;
+var debugtext = new Text(curposX + ", " + curposY + "  R" + rvalue + " G" + gvalue + " B" + bvalue + " r:" + cursoroverright + " l:" + cursoroverleft + " u:" + cursoroverup + " d:" + cursoroverdown, "5pt Arial");
+debugtext.setPosition(10,10);
+var debugdot = new Circle(1);
+debugdot.setColor(Color.red);
+
+
+///menu stuff
+
+//sliders
+
+var redLine = new Line(760,20,760,282);
+redLine.setColor(Color.red);
+var greenLine = new Line(790,20,790,282);
+greenLine.setColor(Color.green);
+var blueLine = new Line(820,20,820,282);
+blueLine.setColor(Color.blue);
+var lineBorderOne = new Rectangle(4,264);
+lineBorderOne.setPosition(redLine.getX()-2,redLine.getY()-1);
+add(lineBorderOne);
+add(redLine);
+menu.push(lineBorderOne);
+menu.push(redLine);
+var lineBorderTwo = new Rectangle(4,264);
+lineBorderTwo.setPosition(greenLine.getX()-2,greenLine.getY()-1);
+add(lineBorderTwo);
+add(greenLine);
+menu.push(lineBorderTwo);
+menu.push(greenLine);
+var lineBorderThree = new Rectangle(4,264);
+lineBorderThree.setPosition(blueLine.getX()-2,blueLine.getY()-1);
+add(lineBorderThree);
+add(blueLine);
+menu.push(lineBorderThree);
+menu.push(blueLine);
+
+var redsliderborder = new Rectangle(18,9);
+redsliderborder.setPosition(lineBorderOne.getX()-7, lineBorderOne.getY());
+add(redsliderborder);
+var redslider = new Rectangle(16,7);
+redslider.setColor(Color.red);
+redslider.setPosition(lineBorderOne.getX()-6, lineBorderOne.getY()+1);
+add(redslider);
+menu.push(redsliderborder);
+menu.push(redslider);
+
+var greensliderborder = new Rectangle(18,9);
+greensliderborder.setPosition(lineBorderTwo.getX()-7, lineBorderTwo.getY());
+add(greensliderborder);
+var greenslider = new Rectangle(16,7);
+greenslider.setColor(Color.green);
+greenslider.setPosition(lineBorderTwo.getX()-6, lineBorderTwo.getY()+1);
+add(greenslider);
+menu.push(greensliderborder);
+menu.push(greenslider);
+
+var bluesliderborder = new Rectangle(18,9);
+bluesliderborder.setPosition(lineBorderThree.getX()-7, lineBorderThree.getY());
+add(bluesliderborder);
+var blueslider = new Rectangle(16,7);
+blueslider.setColor(Color.blue);
+blueslider.setPosition(lineBorderThree.getX()-6, lineBorderThree.getY()+1);
+add(blueslider);
+menu.push(bluesliderborder);
+menu.push(blueslider);
+
+var redslidermove = false;
+var greenslidermove = false;
+var blueslidermove = false;
+
+var reddefaultX = lineBorderOne.getX()-7;
+var reddefaultY = lineBorderOne.getY();
+var reddefaultX2 = lineBorderOne.getX()-6;
+var reddefaultY2 = lineBorderOne.getY()+1;
+
+var greendefaultX = lineBorderTwo.getX()-7;
+var greendefaultY = lineBorderTwo.getY();
+var greendefaultX2 = lineBorderTwo.getX()-6;
+var greendefaultY2 = lineBorderTwo.getY()+1;
+
+var bluedefaultX = lineBorderThree.getX()-7;
+var bluedefaultY = lineBorderThree.getY();
+var bluedefaultX2 = lineBorderThree.getX()-6;
+var bluedefaultY2 = lineBorderThree.getY()+1;
+
+var redbottom1 = redLine.getY()+255;
+var redbottom2 = lineBorderOne.getY()+255;
+
+var greenbottom1 = greenLine.getY()+255;
+var greenbottom2 = lineBorderTwo.getY()+255;
+
+var bluebottom1 = blueLine.getY()+255;
+var bluebottom2 = lineBorderThree.getY()+255;
+
+
+var sizeborder = new Rectangle(78,4);
+sizeborder.setPosition(751,340);
+add(sizeborder);
+menu.push(sizeborder);
+var sizeline = new Line(752,342,827,342);
+sizeline.setColor(Color.white);
+add(sizeline);
+menu.push(sizeline);
+var sizesliderborder = new Rectangle(9,18);
+sizesliderborder.setPosition(sizeborder.getX(),sizeborder.getY()-7);
+add(sizesliderborder);
+menu.push(sizesliderborder);
+var sizeslider = new Rectangle(7,16);
+sizeslider.setColor(Color.white);
+sizeslider.setPosition(sizesliderborder.getX()+1,sizesliderborder.getY()+1);
+add(sizeslider);
+menu.push(sizeslider);
+
+var sizeslidermove = false;
+
+var sizesliderDefaultX = sizeborder.getX();
+var sizesliderDefaultX2 = sizeborder.getX()+1;
+
+var sizesliderBottomX = sizesliderDefaultX+70;
+var sizesliderBottomX2 = sizesliderDefaultX+71;
+
+var sizesliderY = 333;
+var sizesliderY2 = 334;
+
+var sizeCircle = new Circle(1);
+sizeCircle.setPosition(sizesliderDefaultX+39,390);
+add(sizeCircle);
+menu.push(sizeCircle);
+
+
+var load = new WebImage("https://codehs.com/uploads/6d99378dde9900d1080b7443d3db0dc5");
+load.setPosition(sizesliderDefaultX,435);
+add(load);
+menu.push(load);
+
+var trash = new WebImage("https://codehs.com/uploads/527d66a4a2f291a8130bb7d48e067bd5");
+trash.setPosition(load.getX()+21,435);
+add(trash);
+menu.push(trash);
+
+var defcolorposX = load.getX();
+var defcolorposY = 477;
+var p = 0;
+
+for(var i = 0; i < 16; i++)
+{
+    var savecolorborder = new Rectangle(18,18);
+    if(p == 4)
+    {
+        defcolorposY = defcolorposY + 21;
+        p = 0;
+    }
+    savecolorborder.setPosition(defcolorposX+(21*p),defcolorposY);
+    add(savecolorborder);
+    menu.push(savecolorborder);
+    p++;
+}
+
+var savecolor1 = new Rectangle(18,18);
+savecolor1.setPosition(load.getX(),477)
+
+//
+
+//current colors
+
+var colorbox1border = new Rectangle(26,26);
+colorbox1border.setPosition(reddefaultX+6,redbottom1+20);
+add(colorbox1border);
+menu.push(colorbox1border);
+var colorbox1 = new Rectangle(24,24);
+colorbox1.setPosition(colorbox1border.getX()+1,colorbox1border.getY()+1);
+colorbox1.setColor(Color.white);
+add(colorbox1);
+menu.push(colorbox1);
+var colorbox2border = new Rectangle(26,26);
+colorbox2border.setPosition(colorbox1border.getX()+40,colorbox1border.getY());
+add(colorbox2border);
+menu.push(colorbox2border);
+
+//
+
+///
+
+
+
+///drawing stuff
+
+var drawing = false;
+var splotch;
+var splotches = [];
+var newest;
+var secondnewest;
+var middlesplotchX;
+var middlesplotchY;
+var middlesplotch;
+var sploshes = [];
+var splotchrad = 1;
+
+///
+
+var cursoroverleft = true;
+var cursoroverright = false;
+var cursoroverup = true;
+var cursoroverdown = false;
+
+
+
+
+
+
+
+/*         _                
+          | |               
+  ___ ___ | | ___  _ __ ___ 
+ / __/ _ \| |/ _ \| '__/ __|
+| (_| (_) | | (_) | |  \__ \
+ \___\___/|_|\___/|_|  |___/
+
+*/
+
+var currentcolor = new Color(0,0,0);
+var updatedcolor = new Color(0,0,0);
+
+
+
+
+
+
+
+
+function begin()
+{
+    mouseDownMethod(mouseDown);
+    mouseMoveMethod(mouseMove);
+    mouseUpMethod(mouseUp);
+    debug();
+    setTimer(timer,40);
+}
+
+function mouseDown(e)
+{
+    //if mouse x !> 19 and x !< 731 and y !> 19 and y !< 731
+    //select button/slider
+    //var redslidermove = false and so on
+    var menuelem = getElementAt(e.getX(),e.getY());
+    if(e.getX()>731)
+    {
+        if(menuelem == redslider)
+        {
+            redslidermove = true;
+        }
+        if(menuelem == greenslider)
+        {
+            greenslidermove = true;
+        }
+        if(menuelem == blueslider)
+        {
+            blueslidermove = true;
+        }
+        if(menuelem == sizeslider)
+        {
+            sizeslidermove = true;
+        }
+        if(menuelem == load)
+        {
+            loadImage();
+        }
+        if(menuelem == trash)
+        {
+            throwAway();
+        }
+    }
+    
+    
+    
+    
+    
+    //if mouse x !> 19 and x !< 731 and y !> 19 and y !< 731
+    //set drawing = true
+    if(e.getX()>24 && e.getX()<726 && e.getY()>24 && e.getY()<726)
+    {
+        splotch = new Circle(splotchrad);
+        splotch.setPosition(e.getX(),e.getY());
+        splotch.setColor(updatedcolor);
+        add(splotch);
+        splotches.push(splotch);
+        drawing = true;
+    }
+}
+
+function mouseMove(e)
+{
+    //move slider
+    //if redslidermove = true yadda yadda yadda
+    
+    //red slider
+    
+    if(redslidermove)
+    {
+        remove(redslider);
+        remove(redsliderborder);
+        redsliderborder.setPosition(reddefaultX,e.getY()-4);
+        redslider.setPosition(reddefaultX2,e.getY()-3);
+        if(redsliderborder.getY()<reddefaultY)
+        {
+            redsliderborder.setPosition(reddefaultX,reddefaultY);
+            redslider.setPosition(reddefaultX2,reddefaultY2);
+        }
+        if(redsliderborder.getY()>redbottom2)
+        {
+            redsliderborder.setPosition(reddefaultX,redbottom2);
+            redslider.setPosition(reddefaultX2,redbottom1);
+        }
+        add(redsliderborder);
+        add(redslider);
+    }
+    
+    //green slider
+    
+    if(greenslidermove)
+    {
+        remove(greenslider);
+        remove(greensliderborder);
+        greensliderborder.setPosition(greendefaultX,e.getY()-4);
+        greenslider.setPosition(greendefaultX2,e.getY()-3);
+        if(greensliderborder.getY()<greendefaultY)
+        {
+            greensliderborder.setPosition(greendefaultX,greendefaultY);
+            greenslider.setPosition(greendefaultX2,greendefaultY2);
+        }
+        if(greensliderborder.getY()>greenbottom2)
+        {
+            greensliderborder.setPosition(greendefaultX,greenbottom2);
+            greenslider.setPosition(greendefaultX2,greenbottom1);
+        }
+        add(greensliderborder);
+        add(greenslider);
+    }
+    
+    //blue slider
+    
+    if(blueslidermove)
+    {
+        remove(blueslider);
+        remove(bluesliderborder);
+        bluesliderborder.setPosition(bluedefaultX,e.getY()-4);
+        blueslider.setPosition(bluedefaultX2,e.getY()-3);
+        if(bluesliderborder.getY()<bluedefaultY)
+        {
+            bluesliderborder.setPosition(bluedefaultX,bluedefaultY);
+            blueslider.setPosition(bluedefaultX2,bluedefaultY2);
+        }
+        if(bluesliderborder.getY()>bluebottom2)
+        {
+            bluesliderborder.setPosition(bluedefaultX,bluebottom2);
+            blueslider.setPosition(bluedefaultX2,bluebottom1);
+        }
+        add(bluesliderborder);
+        add(blueslider);
+    }
+    
+    if(sizeslidermove)
+    {
+        remove(sizeslider);
+        remove(sizesliderborder);
+        sizesliderborder.setPosition(e.getX()-4, sizesliderY);
+        sizeslider.setPosition(e.getX()-3, sizesliderY2);
+        if(sizesliderborder.getX()<sizesliderDefaultX)
+        {
+            sizesliderborder.setPosition(sizesliderDefaultX,sizesliderY);
+            sizeslider.setPosition(sizesliderDefaultX2,sizesliderY2);
+        }
+        if(sizesliderborder.getX()>sizesliderBottomX)
+        {
+            sizesliderborder.setPosition(sizesliderBottomX,sizesliderY);
+            sizeslider.setPosition(sizesliderBottomX2,sizesliderY2);
+        }
+        add(sizesliderborder);
+        add(sizeslider);
+    }
+    
+    if(debugon)
+    {
+        remove(debugtext);
+        debugtext = new Text(curposX + ", " + curposY + "  R" + rvalue + " G" + gvalue + " B" + bvalue + " r:" + cursoroverright + " l:" + cursoroverleft + " u:" + cursoroverup + " d:" + cursoroverdown + " splotch radius:" + splotchrad, "7pt Arial");
+        debugtext.setPosition(5,13);
+        add(debugtext);
+        debugdot.setPosition(e.getX()-1,e.getY()-1);
+    }
+    
+    
+    
+    
+    
+    curposX = e.getX();
+    curposY = e.getY();
+    
+    paint(curposX,curposY);
+    
+    
+    
+    
+    if(e.getX()<canvasX+(splotchrad/2))
+    {
+        sploshes = [];
+        cursoroverleft = true;
+        cursoroverright = false;
+    }
+    if(e.getX()>canvasXLow-(splotchrad/2))
+    {
+        sploshes = [];
+        cursoroverright = true;
+        cursoroverleft = false;
+    }
+    if(e.getY()<canvasY+(splotchrad/2))
+    {
+        sploshes = [];
+        cursoroverup = true;
+        cursoroverdown = false;
+    }
+    if(e.getY()>canvasYLow-(splotchrad/2))
+    {
+        sploshes = [];
+        cursoroverdown = true;
+        cursoroverup = false;
+    }
+    if(e.getX()>canvasX+(splotchrad/2) && e.getX()<canvasXLow-(splotchrad/2))
+    {
+        cursoroverleft = false;
+        cursoroverright = false;
+    }
+    if(e.getY()>canvasY+(splotchrad/2) && e.getY()<canvasYLow-(splotchrad/2))
+    {
+        cursoroverup = false;
+        cursoroverdown = false;
+    }
+}
+
+function mouseUp(e)
+{
+    //all slidermoves = false
+    redslidermove = false;
+    greenslidermove = false;
+    blueslidermove = false;
+    sizeslidermove = false;
+    
+    
+    
+    
+    //set drwaing = false
+    drawing = false;
+    sploshes = [];
+}
+
+function paint(x,y)
+{
+    splotch = new Circle(splotchrad);
+    splotch.setPosition(x,y);
+    splotch.setColor(updatedcolor);
+    if(cursoroverleft)
+    {
+        x = canvasX+(splotch.getRadius()/2)+3;
+    }
+    if(cursoroverright)
+    {
+        x = canvasXLow-(splotch.getRadius()/2)-3;
+    }
+    if(cursoroverup)
+    {
+        y = canvasY+(splotch.getRadius()/2)+3;
+    }
+    if(cursoroverdown)
+    {
+        y = canvasYLow-(splotch.getRadius()/2)-3;
+    }
+    splotch.setPosition(x,y);
+    if(drawing)
+    {
+        add(splotch);
+        splotches.push(splotch);
+        sploshes.push(splotch);
+        makemiddlesplotch();
+    }
+}
+
+function makemiddlesplotch(e)
+{
+    if(sploshes.length > 1)
+    {
+        newest = sploshes[sploshes.length-1];
+        secondnewest = sploshes[sploshes.length-2];
+        middlesplotchX = (newest.getX()+secondnewest.getX())/2;
+        middlesplotchY = (newest.getY()+secondnewest.getY())/2;
+        middlesplotch = new Circle(splotchrad);
+        middlesplotch.setPosition(middlesplotchX,middlesplotchY);
+        middlesplotch.setColor(updatedcolor);
+        add(middlesplotch);
+        splotches.push(middlesplotch);
+    }
+}
+
+function colorupdate(needsupdated)
+{
+    remove(needsupdated);
+    updatedcolor = new Color (rvalue,gvalue,bvalue);
+    needsupdated.setColor(updatedcolor);
+    add(needsupdated);
+}
+
+function sizeupdate()
+{
+    remove(sizeCircle);
+    splotchrad = (sizesliderborder.getX()/2)-375;
+    if(splotchrad<1)
+    {
+        splotchrad = 1;
+    }
+    sizeCircle.setRadius(splotchrad);
+    add(sizeCircle);
+}
+
+function valuesupdate()
+{
+    rvalue = redslider.getY()-20;
+    gvalue = greenslider.getY()-20;
+    bvalue = blueslider.getY()-20;
+    redslider.setPosition(redslider.getX(),rvalue+20);
+    greenslider.setPosition(greenslider.getX(),gvalue+20);
+    blueslider.setPosition(blueslider.getX(),bvalue+20);
+}
+
+function timer()
+{
+    colorupdate(colorbox1);
+    sizeupdate();
+    valuesupdate();
+    refreshMenu();
+}
+
+function refreshMenu()
+{
+    for(var i = 0; i < menu.length; i++)
+    {
+        var currentmenuitem = menu[i];
+        remove(currentmenuitem);
+        add(currentmenuitem);
+    }
+}
+
+function loadImage()
+{
+    var imagetoload = readLine("Paste a link to the image you want to load");
+    if(imagetoload != null && imagetoload.charAt(0) == 'h')
+    {
+        remove(drawArea);
+        drawArea = new WebImage(imagetoload);
+        drawArea.setSize(710,710);
+        drawArea.setPosition(20,20);
+        add(drawArea);
+    }
+    else
+    {
+        badboy();
+    }
+}
+
+function throwAway()
+{
+    var blankcanvas = new Rectangle(710,710);
+    blankcanvas.setColor(Color.white);
+    blankcanvas.setPosition(20,20);
+    add(blankcanvas);
+    splotches.push(blankcanvas);
+}
+
+function badboy()
+{
+    badboycount++;
+    var badboytext = new Text("You have been a very very bad boy", "30pt Arial");
+    var badboycolor = Randomizer.nextColor();
+    badboytext.setPosition(drawArea.getX()+40,drawArea.getY()+(badboycount*100)+15);
+    badboytext.setColor(badboycolor);
+    add(badboytext);
+    menu.push(badboytext);
+    if(badboycount == 6)
+    {
+        badboycount = 0;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var curposX = 0;
+var curposY = 0;
+var coords = new Text(curposX + ", " + curposY , "5pt Arial");
+coords.setPosition(10,10);
+
+var debugon = false;
+
+function debug()
+{
+    keyDownMethod(debugtoggle);
+}
+
+function debugtoggle(e)
+{
+    println(e.keyCode);
+    if(e.keyCode == Keyboard.ALT)
+    {
+        if(debugon == false)
+        {
+            debugon = true;
+            setTimer(debugtimer,1);
+        }
+    }
+}
+
+function debugtimer()
+{
+    remove(debugdot);
+    add(debugdot);
+    remove(debugtext);
+    add(debugtext);
+}
+
+
+    if (typeof start === 'function') {
+        start();
+    }
+};
+</script>
+
+</body>
+</html>
