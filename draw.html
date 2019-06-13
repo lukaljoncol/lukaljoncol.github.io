@@ -1,0 +1,1057 @@
+
+<html>
+<head>
+<title>colin whyte's draw</title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+<script type="text/javascript" src="https://static.codehs.com/gulp/a69953d0088bc123e437ae84d789824820b1fa2e/chs-js-lib/chs.js"></script>
+
+
+<style>
+canvas {
+    border: 2px solid black;
+    display: inline-block;
+    vertical-align: top;
+}
+
+pre {
+    border: 1px solid white;
+    display: inline-block;
+    width: 400px;
+    height: 47px;
+    background-color: #ffffff;
+}
+</style>
+
+</head>
+
+<body>
+<h1>colin whyte's draw</h1>
+
+
+
+<canvas
+width="400"
+height="500"
+class="codehs-editor-canvas"></canvas>
+<pre id="console"></pre>
+
+<script>
+window.onload = function() {
+
+    setSize(500,590);
+var counter = 0;
+var arr = [];
+var inksize = 5;
+var boxbox = new Rectangle(getWidth(),86);
+boxbox.setColor("#d8d8d8");
+add(boxbox);
+var boxline = new Line(0,85,getWidth(),85);
+add(boxline);
+var size2box = new Rectangle(18,18);
+size2box.setPosition(386,11);
+size2box.setColor(Color.white);
+add(size2box);
+var size2 = new Circle(2);
+size2.setPosition(395,20);
+add(size2);
+var size5box = new Rectangle(18,18);
+size5box.setPosition(409,11);
+size5box.setColor(Color.white);
+add(size5box);
+var size5 = new Circle(5);
+size5.setPosition(418,20);
+add(size5);
+var size8box = new Rectangle(18,18);
+size8box.setPosition(432,11);
+size8box.setColor(Color.white);
+add(size8box);
+var size15box = new Rectangle(18,18);
+size15box.setPosition(455,11);
+add(size15box);
+var size8 = new Circle(8);
+size8.setPosition(441,20);
+add(size8);
+var size30box = new Rectangle(18,18);
+size30box.setPosition(478,11);
+size30box.setColor(Color.white);
+add(size30box);
+var size30 = new Text("n/a","10pt Arial");
+size30.setPosition(478,24);
+add(size30);
+var ink;
+var inkcolor;
+var testcolor;
+var redline = new Line(20, 20, 285, 20);
+redline.setColor(Color.red);
+add(redline);
+var redslider = new Rectangle(10,19);
+redslider.setPosition(20,20);
+redslider.setColor(Color.red);
+add(redslider);
+var blueline = new Line(20, 60, 285, 60);
+blueline.setColor(Color.blue);
+add(blueline);
+var blueslider = new Rectangle(10,19);
+blueslider.setPosition(20,60);
+blueslider.setColor(Color.blue);
+add(blueslider);
+var greenline = new Line(20, 40, 285, 40);
+greenline.setColor(Color.green);
+add(greenline);
+var greenslider = new Rectangle(10,19);
+greenslider.setPosition(20,40);
+greenslider.setColor(Color.green);
+add(greenslider);
+var blackslider = new Rectangle(10,19);
+blackslider.setPosition(20,0);
+blackslider.setColor(Color.black);
+add(blackslider);
+var redslidermove = false;
+var blueslidermove = false;
+var greenslidermove = false;
+var blackslidermove = false;
+var testcircleborder = new Circle(24);
+testcircleborder.setPosition(350,40);
+add(testcircleborder);
+var testcircleinside = new Circle(22);
+testcircleinside.setPosition(350,40);
+testcircleinside.setColor("#d8d8d8")
+add(testcircleinside);
+var testcircle;
+var trash = new WebImage("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAb1BMVEX///8BAQEAAACXl5ft7e2goKDm5uaqqqqKiori4uK4uLjJycliYmJ+fn5RUVFXV1fS0tIuLi6mpqZMTEzDw8O1tbWQkJAgICCEhIRycnKbm5v09PQODg7Z2dl4eHhAQEBubm43NzcWFhZHR0cnJydpV6aXAAAEb0lEQVR4nO3d6VryMBAFYAggq7KUAh9QNr3/a/yKyqPOBNqkk2T0Oed3CPN2TcOSVitYZr3T3LQfx5hskz+FqyFgxidzTQXwSiyz7nRT1+uaxb6O7jtzOktds0v6Tryb8WWYuu66Gc6dfZ/ITerS62Xr53snXn7Dbpx6A9+Neer6q7KrvD1UEVepCY+z2zcD6j8ZL02BV6PmvXgWAJbEfmrH3fwTAZYHapFacicjGeCVmJpiz67JbYIQT6kx1kzEgOVO1DhILeSAJXGemmPJ0S40lbG/bJnawzKzVVrWf1yNxrO7WfYPdqN5Sw1isZ2F5fikxoPt+GgzqjsTbRdSc6754J7bXnwKWq97+pYaJ7VfPeREdffEjJc4dXj5k4U4ClasV1iF5uL0+iUXHgKV6hd+JXW9UrArleMmCp0tqy9z7OGJb6NdkFI9c2JC5zv2C+tC1f2CDmg8roQ5E6qasqEXGueD1HKYmm2AQr3DhB6TLRJ9hAurrifQh6rbBTvCFu59vFHhP/k6/SMhpDOtEMYNE3pMCNKpyFjn4a43XVc/pjOhe9rsSmOquzkfGs8FdGqWR+NBtDxA1cm62eRqJjdDGCqm0WOW4ARhuDSZeuQPbSpj9t5CmQ9awsd7jN7VfxJ+xGnC5Ht+yUHaYNZK7LOk0IEQQv2BEEL9gfBu/u4dfz3/yPq3CNvmVnHNKb77z7Vqc6u4U1eYumDfQAih/kAIof5ACKH+QAih/kD4JZT5ZE8+lXXU/LnNE0mX/pjJFLTJgxTL/v3k42H9nroDWseqS5r4fhWOfohtEv1ol34/0OdbO/ZoEXYg9A6EsQKhfyCMFQj9A2GsQOgfCGMFQv9A2Go9v0x/5JX9t9WGtMjYl0K3tMVYkzCj0wnsn3QmtAWr/5m2YN/9TSmkPzyzCUkLi5C0gBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBDCKMLXyv8Rnlb+j/CBtsg1CfPez2xZixFtwf4teklbFJqEcQKhfyCMFQj9A2GshBPShQf/npCtf6hFuJDq+Ux7ZqONODnQOti4zjdZsG3nlgutYynVM9t2c6menVKQMgSPpQXrWmzjuYQeSm3ju+woy4x1Ldd3/fDtvJbrnK1Ta/bRL6cLXsSzXO/0Ef66F8XuRbUynFpWAxY8V3LW+3Wx4cn2wUq/klkMzpZ1po2RA9oXsn68/LJ0LO9/kBTSWSIFscwFNUlX32rkZiIJbLU22oTGsKmshtG2E81AGNga6yJK3u1vUXWcCl9mPsOGheliWVdPJHM1xGADKiVEY7aBgO8fr6TmhTtEP9JJTjRmH+Ii85XiLamxHKAKPjLdSd86DI7ly8LuwJtxbh/sB+eZU7RJvmHnGPfZ6ZpJHnnqpBgtVoNI6fTHiSahESRO/gOnpphaisj10QAAAABJRU5ErkJggg==");
+trash.setSize(17,17);
+trash.setPosition(290,20);
+add(trash);
+var eraser = new WebImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKjzg0HXfWjNRoCfk7UsMg0GGlEMgEo8dk_BtxjJRCaZsQIL7I");
+eraser.setSize(17,17);
+eraser.setPosition(290,41);
+add(eraser);
+var pencil = new WebImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShqACnD-vWhkMVhZF2U8uIRl91cA3GFwXTaJAyOXdRfBf6DZ_L");
+pencil.setSize(17,17);
+pencil.setPosition(290,62);
+add(pencil);
+var info = new Text("Z: undo", "7pt Arial");
+info.setPosition(370,8);
+add(info);
+var mouse = new WebImage("https://cdn150.picsart.com/upscale-240251204040212.png?r1024x1024");
+mouse.setSize(11,19);
+var cursoricon = new WebImage("https://cdn150.picsart.com/upscale-240251160038212.png?r1024x1024");
+cursoricon.setPosition(0,0);
+cursoricon.setSize(13,15);
+var cursorbutton = new Rectangle(13,15);
+cursorbutton.setPosition(0,0);
+cursorbutton.setColor("#a53737");
+add(cursorbutton);
+add(cursoricon);
+var cursorOn = 2;
+var slot1 = new WebImage("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAUVBMVEX///8BAQFFRUXY2Ni7u7uxsbHx8fGfn5/o6Oj19fVMTEzg4OBmZmatra0yMjLAwMA6OjodHR19fX3S0tIREREtLS10dHQLCwuKiora2tplZWVVZnYAAAAB80lEQVR4nO3cW27iQBCGUZt7CLnBZCaZ/S80PEfBbXVb6p/onAVY9QnkB1DVMAAAAAAAwGIum+13m5dD76kWcziNN+x7j7aMp1t9V2+73tMtYDsReNV7vHa76cDxf+8Bm30UCse7f9/8KxXe+9um9CUdx1PvERs9FgtXvUdstFaoMJ5ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsz3+ws/76Fw97iu9lnYr7x6bXj8eoHVvt1Hcb2ur9WmLbD8EfT33LJLPLWkHOShOvDQe/SZjtWFN/fo01xqC3sPPtu5MvDSe/DZ3isLN70Hn0+hwnwKFeZTqDCfQoX5FCrMp1BhvsrCl95zz1dZWL61lqL6B9Peg89WfZlw33vyuep/1n/rPfo8Dccly3cdE/ytDxzu4q+LbVPgMBz2p1WD1+KAf1oefzw3/kHaznVPhfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzlQ8T1p8EDFEsrL2XF2NVKuy+XtequNTfe8B2z9OBrRugAaZ3idt2eEM8HG8HNmxhR7mc33/KO+7r9+gBAAAAAABI9AUtBjBTubwWuwAAAABJRU5ErkJggg==");
+slot1.setSize(18,18);
+slot1.setPosition(386,34);
+add(slot1);
+var slot1color = new Rectangle(18,18);
+slot1color.setPosition(386,34);
+var slot1red;
+var slot1green;
+var slot1blue;
+var slot1trash = new Rectangle(18,5);
+slot1trash.setColor("#e04c4c");
+slot1trash.setPosition(386,52);
+var slot2 = new WebImage("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAUVBMVEX///8BAQFFRUXY2Ni7u7uxsbHx8fGfn5/o6Oj19fVMTEzg4OBmZmatra0yMjLAwMA6OjodHR19fX3S0tIREREtLS10dHQLCwuKiora2tplZWVVZnYAAAAB80lEQVR4nO3cW27iQBCGUZt7CLnBZCaZ/S80PEfBbXVb6p/onAVY9QnkB1DVMAAAAAAAwGIum+13m5dD76kWcziNN+x7j7aMp1t9V2+73tMtYDsReNV7vHa76cDxf+8Bm30UCse7f9/8KxXe+9um9CUdx1PvERs9FgtXvUdstFaoMJ5ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsz3+ws/76Fw97iu9lnYr7x6bXj8eoHVvt1Hcb2ur9WmLbD8EfT33LJLPLWkHOShOvDQe/SZjtWFN/fo01xqC3sPPtu5MvDSe/DZ3isLN70Hn0+hwnwKFeZTqDCfQoX5FCrMp1BhvsrCl95zz1dZWL61lqL6B9Peg89WfZlw33vyuep/1n/rPfo8Dccly3cdE/ytDxzu4q+LbVPgMBz2p1WD1+KAf1oefzw3/kHaznVPhfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzlQ8T1p8EDFEsrL2XF2NVKuy+XtequNTfe8B2z9OBrRugAaZ3idt2eEM8HG8HNmxhR7mc33/KO+7r9+gBAAAAAABI9AUtBjBTubwWuwAAAABJRU5ErkJggg==");
+slot2.setSize(18,18);
+slot2.setPosition(409,34);
+add(slot2);
+var slot2color = new Rectangle(18,18);
+slot2color.setPosition(409,34);
+var slot2red;
+var slot2green;
+var slot2blue;
+var slot2trash = new Rectangle(18,5);
+slot2trash.setColor("#e04c4c");
+slot2trash.setPosition(409,52);
+var slot3 = new WebImage("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAUVBMVEX///8BAQFFRUXY2Ni7u7uxsbHx8fGfn5/o6Oj19fVMTEzg4OBmZmatra0yMjLAwMA6OjodHR19fX3S0tIREREtLS10dHQLCwuKiora2tplZWVVZnYAAAAB80lEQVR4nO3cW27iQBCGUZt7CLnBZCaZ/S80PEfBbXVb6p/onAVY9QnkB1DVMAAAAAAAwGIum+13m5dD76kWcziNN+x7j7aMp1t9V2+73tMtYDsReNV7vHa76cDxf+8Bm30UCse7f9/8KxXe+9um9CUdx1PvERs9FgtXvUdstFaoMJ5ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsz3+ws/76Fw97iu9lnYr7x6bXj8eoHVvt1Hcb2ur9WmLbD8EfT33LJLPLWkHOShOvDQe/SZjtWFN/fo01xqC3sPPtu5MvDSe/DZ3isLN70Hn0+hwnwKFeZTqDCfQoX5FCrMp1BhvsrCl95zz1dZWL61lqL6B9Peg89WfZlw33vyuep/1n/rPfo8Dccly3cdE/ytDxzu4q+LbVPgMBz2p1WD1+KAf1oefzw3/kHaznVPhfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzlQ8T1p8EDFEsrL2XF2NVKuy+XtequNTfe8B2z9OBrRugAaZ3idt2eEM8HG8HNmxhR7mc33/KO+7r9+gBAAAAAABI9AUtBjBTubwWuwAAAABJRU5ErkJggg==");
+slot3.setSize(18,18);
+slot3.setPosition(432,34);
+add(slot3);
+var slot3color = new Rectangle(18,18);
+slot3color.setPosition(432,34);
+var slot3red;
+var slot3green;
+var slot3blue;
+var slot3trash = new Rectangle(18,5);
+slot3trash.setColor("#e04c4c");
+slot3trash.setPosition(432,52);
+var slot4 = new WebImage("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAUVBMVEX///8BAQFFRUXY2Ni7u7uxsbHx8fGfn5/o6Oj19fVMTEzg4OBmZmatra0yMjLAwMA6OjodHR19fX3S0tIREREtLS10dHQLCwuKiora2tplZWVVZnYAAAAB80lEQVR4nO3cW27iQBCGUZt7CLnBZCaZ/S80PEfBbXVb6p/onAVY9QnkB1DVMAAAAAAAwGIum+13m5dD76kWcziNN+x7j7aMp1t9V2+73tMtYDsReNV7vHa76cDxf+8Bm30UCse7f9/8KxXe+9um9CUdx1PvERs9FgtXvUdstFaoMJ5ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsz3+ws/76Fw97iu9lnYr7x6bXj8eoHVvt1Hcb2ur9WmLbD8EfT33LJLPLWkHOShOvDQe/SZjtWFN/fo01xqC3sPPtu5MvDSe/DZ3isLN70Hn0+hwnwKFeZTqDCfQoX5FCrMp1BhvsrCl95zz1dZWL61lqL6B9Peg89WfZlw33vyuep/1n/rPfo8Dccly3cdE/ytDxzu4q+LbVPgMBz2p1WD1+KAf1oefzw3/kHaznVPhfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzlQ8T1p8EDFEsrL2XF2NVKuy+XtequNTfe8B2z9OBrRugAaZ3idt2eEM8HG8HNmxhR7mc33/KO+7r9+gBAAAAAABI9AUtBjBTubwWuwAAAABJRU5ErkJggg==");
+slot4.setSize(18,18);
+slot4.setPosition(455,34);
+add(slot4);
+var slot4color = new Rectangle(18,18);
+slot4color.setPosition(455,34);
+var slot4red;
+var slot4green;
+var slot4blue;
+var slot4trash = new Rectangle(18,5);
+slot4trash.setColor("#e04c4c");
+slot4trash.setPosition(455,52);
+var slot5 = new WebImage("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAUVBMVEX///8BAQFFRUXY2Ni7u7uxsbHx8fGfn5/o6Oj19fVMTEzg4OBmZmatra0yMjLAwMA6OjodHR19fX3S0tIREREtLS10dHQLCwuKiora2tplZWVVZnYAAAAB80lEQVR4nO3cW27iQBCGUZt7CLnBZCaZ/S80PEfBbXVb6p/onAVY9QnkB1DVMAAAAAAAwGIum+13m5dD76kWcziNN+x7j7aMp1t9V2+73tMtYDsReNV7vHa76cDxf+8Bm30UCse7f9/8KxXe+9um9CUdx1PvERs9FgtXvUdstFaoMJ5ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsz3+ws/76Fw97iu9lnYr7x6bXj8eoHVvt1Hcb2ur9WmLbD8EfT33LJLPLWkHOShOvDQe/SZjtWFN/fo01xqC3sPPtu5MvDSe/DZ3isLN70Hn0+hwnwKFeZTqDCfQoX5FCrMp1BhvsrCl95zz1dZWL61lqL6B9Peg89WfZlw33vyuep/1n/rPfo8Dccly3cdE/ytDxzu4q+LbVPgMBz2p1WD1+KAf1oefzw3/kHaznVPhfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzKVSYT6HCfAoV5lOoMJ9ChfkUKsynUGE+hQrzlQ8T1p8EDFEsrL2XF2NVKuy+XtequNTfe8B2z9OBrRugAaZ3idt2eEM8HG8HNmxhR7mc33/KO+7r9+gBAAAAAABI9AUtBjBTubwWuwAAAABJRU5ErkJggg==");
+slot5.setSize(18,18);
+slot5.setPosition(478,34);
+add(slot5);
+var slot5color = new Rectangle(18,18);
+slot5color.setPosition(478,34);
+var slot5red;
+var slot5green;
+var slot5blue;
+var slot5trash = new Rectangle(18,5);
+slot5trash.setColor("#e04c4c");
+slot5trash.setPosition(478,52);
+var startcounter = Randomizer.nextInt(1,5);
+var startcountertext = new Text("Welcome to draw", "30pt Times");
+startcountertext.setColor(Color.WHITE);
+startcountertext.setPosition(100,200);
+var startbackground;
+var startbackgroundnum;
+var startbackgroundcreator;
+var loadingbar;
+var loadingtext;
+var loadnum;
+var loadingbarsize = 0;
+var submittext = new Text("Submit to the Gallery","7pt Arial");
+submittext.setPosition(410,8);
+submittext.setColor("#0000EE");
+add(submittext);
+var submitline = new Rectangle(87,1);
+submitline.setPosition(410,8);
+submitline.setColor("#0000EE");
+add(submitline);
+var errorbackground = new Rectangle(getWidth(),getHeight());
+errorbackground.setColor(Color.WHITE);
+var errortext = new Text("error: System throttle lost at beginning stage.","10pt Arial");
+var errortext2 = new Text("Please contact system administrator for more information.","10pt Arial");
+errortext.setPosition(1,11);
+errortext2.setPosition(1,23);
+var goback = new Text("Return to main site","10pt Arial");
+goback.setColor("#0000EE");
+goback.setPosition(1,34);
+var dog = new Rectangle(5,5);
+dog.setColor("#37a53c");
+dog.setPosition(409,11);
+add(dog);
+var load = new WebImage("https://www.iconexperience.com/_img/o_collection_png/green_dark_grey/512x512/plain/folder_open.png");
+load.setSize(13,15);
+load.setPosition(0,17);
+add(load);
+
+function start()
+{
+    println("If you want to submit your painting, run Capture,");
+    println("which can be found in the draw art folder on the shared");
+    println("drive.");
+    println("");
+    println("To load an image, click the load icon under the cursor");
+    println("icon. Then, paste a direct link to the image you want to load.");
+    startbackgroundnum = Randomizer.nextInt(1,10);
+    if(startbackgroundnum == 1)
+    {
+        startbackground = new WebImage("http://www.edinphoto.org.uk/0_P/0_paintings_howie_horse.jpg");
+        startbackgroundcreator = new Text("Submitted by Moses Z.","20pt Times");
+    }
+    if(startbackgroundnum == 2)
+    {
+        startbackground = new WebImage("http://www.viethatran.com/wp-content/uploads/2016/10/Painting009.jpg");
+        startbackgroundcreator = new Text("Submitted by Anakin S.","20pt Times");
+    }
+    if(startbackgroundnum == 3)
+    {
+        startbackground = new WebImage("https://tilburyhouse.com/wp-content/uploads/2015/11/i-am-coyote-painting.jpg");
+        startbackgroundcreator = new Text("Submitted by John Wilkes B.","20pt Times");
+    }
+    if(startbackgroundnum == 4)
+    {
+        startbackground = new WebImage("https://static01.nyt.com/images/2017/12/04/opinion/04mon1web/04mon1web-blog427.jpg");
+        startbackgroundcreator = new Text("Submitted by Korbin S.","20pt Times");
+    }
+    if(startbackgroundnum == 5)
+    {
+        startbackground = new WebImage("https://video-images.vice.com/_uncategorized/1510347776652-fe017f4a609ac8b5ff884de127153c16-ferdinand.jpeg");
+        startbackgroundcreator = new Text("Submitted by Alex C.","20pt Times");
+    }
+    if(startbackgroundnum == 6)
+    {
+        startbackground = new WebImage("http://www.krogen.co/wp-content/uploads/2017/10/painting-sunflowers-best-25-sunflower-paintings-ideas-on-pinterest-sunflower-canvas-image.jpg");
+        startbackgroundcreator = new Text("Submitted by Filthy Stinky Hog","20pt Times");
+    }
+    if(startbackgroundnum == 7)
+    {
+        startbackground = new WebImage("https://images.graph.cool/v1/cj6c28vh912680101ozc2paxj/cj9ubzsr201oq0188a9qijao1/0x0:2212x1754/960x960/Max_Ernst_Ohne_titelsend.jpg");
+        startbackgroundcreator = new Text("Submitted by Dan H.","20pt Times");
+    }
+    if(startbackgroundnum == 8)
+    {
+        startbackground = new WebImage("https://i.ytimg.com/vi/_bJUeTj_jZk/hqdefault.jpg");
+        startbackgroundcreator = new Text("Submitted by The Quizman","20pt Times");
+    }
+    if(startbackgroundnum == 9)
+    {
+        startbackground = new WebImage("http://cookxl.info/wp-content/uploads/2017/10/bear-painting-best-25-bear-paintings-ideas-on-pinterest-bear-art-bear-ideas.jpg");
+        startbackgroundcreator = new Text("Submitted by Garrett S.","20pt Times");
+    }
+    if(startbackgroundnum == 10)
+    {
+        startbackground = new WebImage("https://assets.atlasobscura.com/article_images/49739/image.jpg");
+        startbackgroundcreator = new Text("Submitted by Mike M.","20pt Times");
+    }
+    startbackground.setSize(getWidth(),getHeight());
+    startbackgroundcreator.setColor(Color.WHITE);
+    startbackgroundcreator.setPosition(10,30);
+    add(startbackground);
+    add(startbackgroundcreator);
+    add(startcountertext);
+    setTimer(countdowntobegin,1000);
+    setTimer(loading,50);
+}
+
+function countdowntobegin()
+{
+    startcounter--;
+    if(startcounter<=0)
+    {
+        remove(startbackground);
+        remove(startcountertext);
+        stopTimer(countdowntobegin);
+        stopTimer(loading);
+        remove(loadingbar);
+        remove(loadingtext);
+        remove(startbackgroundcreator);
+        begin();
+    }
+}
+
+function loading()
+{
+    remove(loadingbar);
+    remove(loadingtext);
+    loadingbar = new Rectangle(loadingbarsize,10);
+    loadingbar.setColor(Color.WHITE);
+    loadingbar.setPosition(50,400);
+    add(loadingbar);
+    loadingbarsize = Randomizer.nextInt(5,400);
+    loadnum = Randomizer.nextInt(1,5);
+    if(loadnum == 1)
+    {
+        loadingtext = new Text("Removing C:/...","10pt Arial");
+        loadingtext.setColor(Color.WHITE);
+        loadingtext.setPosition(50,425);
+        add(loadingtext);
+    }
+    if(loadnum == 2)
+    {
+        loadingtext = new Text("Indexing databases...","10pt Arial");
+        loadingtext.setColor(Color.WHITE);
+        loadingtext.setPosition(50,425);
+        add(loadingtext);
+    }
+    if(loadnum == 3)
+    {
+        loadingtext = new Text("Adding global variables (1292 out of 4365)...","10pt Arial");
+        loadingtext.setColor(Color.WHITE);
+        loadingtext.setPosition(50,425);
+        add(loadingtext);
+    }
+    if(loadnum == 4)
+    {
+        loadingtext = new Text("Helping...","10pt Arial");
+        loadingtext.setColor(Color.WHITE);
+        loadingtext.setPosition(50,425);
+        add(loadingtext);
+    }
+    if(loadnum == 5)
+    {
+        loadingtext = new Text("Flying drones overhead...","10pt Arial");
+        loadingtext.setColor(Color.WHITE);
+        loadingtext.setPosition(50,425);
+        add(loadingtext);
+    }
+}
+
+function begin()
+{
+    mouseDragMethod(paint);
+    mouseDownMethod(chooseSlider);
+    mouseMoveMethod(moveSlider);
+    mouseUpMethod(stopMoving);
+    keyDownMethod(undo);
+    setTimer(testCircleUpdate,40);
+    setTimer(cursorUpdate,40);
+    setTimer(slot1Update,40);
+    setTimer(slot2Update,40);
+    setTimer(slot3Update,40);
+    setTimer(slot4Update,40);
+    setTimer(slot5Update,40);
+}
+
+function paint(e)
+{
+    if(inksize==2)
+    {
+        if(e.getY()<87 && e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),88);
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+        else if(e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),e.getY());
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+    }
+    if(inksize==5)
+    {
+        if(e.getY()<90 && e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),91);
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+        else if(e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),e.getY());
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+    }
+    if(inksize==8)
+    {
+        if(e.getY()<93 && e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),94);
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+        else if(e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),e.getY());
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+    }
+    if(inksize==15)
+    {
+        if(e.getY()<100 && e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),101);
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+        else if(e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),e.getY());
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+    }
+    if(inksize==60)
+    {
+        if(e.getY()<145 && e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),146);
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+        else if(e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),e.getY());
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+    }
+}
+
+function chooseSlider(e)
+{
+    var whichslider = getElementAt(e.getX(),e.getY());
+    if(whichslider == redslider)
+    {
+        redslidermove = true;
+    }
+    if(whichslider == blueslider)
+    {
+        blueslidermove = true;
+    }
+    if(whichslider == greenslider)
+    {
+        greenslidermove = true;
+    }
+    if(whichslider == blackslider)
+    {
+        blackslidermove = true;
+    }
+    if(whichslider == trash)
+    {
+        var clear = new Rectangle(getWidth(),getHeight()-80);
+        clear.setPosition(0,86);
+        clear.setColor(Color.white);
+        add(clear);
+        arr.push(clear);
+    }
+    if(whichslider == eraser)
+    {
+        redslider.setPosition(275,20);
+        blueslider.setPosition(275,60);
+        greenslider.setPosition(275,40);
+    }
+    if(whichslider == pencil)
+    {
+        redslider.setPosition(20,20);
+        blueslider.setPosition(20,60);
+        greenslider.setPosition(20,40);
+    }
+    if(whichslider == submittext || whichslider == submitline)
+    {
+        remove(submittext);
+        remove(submitline);
+        submittext.setColor("#551A8B");
+        submitline.setColor("#551A8B");
+        add(submittext);
+        add(submitline);
+        setTimer(error,1);
+    }
+    if(whichslider == goback)
+    {
+        goback.setColor("#551A8B");
+        stopTimer(error);
+        remove(errorbackground);
+        remove(errortext);
+        remove(errortext2);
+        remove(goback);
+    }
+    if(whichslider == size2box || whichslider == size2)
+    {
+        remove(dog);
+        dog.setPosition(386,11);
+        add(dog);
+        inksize = 2;
+    }
+    if(whichslider == size5box || whichslider == size5)
+    {
+        remove(dog);
+        dog.setPosition(409,11);
+        add(dog);
+        inksize = 5;
+    }
+    if(whichslider == size8box || whichslider == size8)
+    {
+        remove(dog);
+        dog.setPosition(432,11);
+        add(dog);
+        inksize = 8;
+    }
+    if(whichslider == size15box)
+    {
+        remove(dog);
+        dog.setPosition(455,11);
+        add(dog);
+        inksize = 15;
+    }
+    if(whichslider == size30box || whichslider == size30)
+    {
+        remove(dog);
+        dog.setPosition(478,11);
+        add(dog);
+        inksize = 60;
+    }
+    if(whichslider == cursoricon || whichslider == cursorbutton)
+    {
+        cursorOn++;
+    }
+    if(whichslider == slot1)
+    {
+        remove(slot1);
+        stopTimer(slot1Update);
+        add(slot1color);
+        add(slot1trash);
+    }
+    if(whichslider == slot1color)
+    {
+        redslider.setPosition(slot1red,20);
+        greenslider.setPosition(slot1green,40);
+        blueslider.setPosition(slot1blue,60);
+    }
+    if(whichslider == slot1trash)
+    {
+        add(slot1);
+        remove(slot1trash);
+        setTimer(slot1Update,20);
+    }
+    if(whichslider == slot2)
+    {
+        remove(slot2);
+        stopTimer(slot2Update);
+        add(slot2color);
+        add(slot2trash);
+    }
+    if(whichslider == slot2color)
+    {
+        redslider.setPosition(slot2red,20);
+        greenslider.setPosition(slot2green,40);
+        blueslider.setPosition(slot2blue,60);
+    }
+    if(whichslider == slot2trash)
+    {
+        add(slot2);
+        remove(slot2trash);
+        setTimer(slot2Update,20);
+    }
+    if(whichslider == slot3)
+    {
+        remove(slot3);
+        stopTimer(slot3Update);
+        add(slot3color);
+        add(slot3trash);
+    }
+    if(whichslider == slot3color)
+    {
+        redslider.setPosition(slot3red,20);
+        greenslider.setPosition(slot3green,40);
+        blueslider.setPosition(slot3blue,60);
+    }
+    if(whichslider == slot3trash)
+    {
+        add(slot3);
+        remove(slot3trash);
+        setTimer(slot3Update,20);
+    }
+    if(whichslider == slot4)
+    {
+        remove(slot4);
+        stopTimer(slot4Update);
+        add(slot4color);
+        add(slot4trash);
+    }
+    if(whichslider == slot4color)
+    {
+        redslider.setPosition(slot4red,20);
+        greenslider.setPosition(slot4green,40);
+        blueslider.setPosition(slot4blue,60);
+    }
+    if(whichslider == slot4trash)
+    {
+        add(slot4);
+        remove(slot4trash);
+        setTimer(slot4Update,20);
+    }
+    if(whichslider == slot5)
+    {
+        remove(slot5);
+        stopTimer(slot5Update);
+        add(slot5color);
+        add(slot5trash);
+    }
+    if(whichslider == slot5color)
+    {
+        redslider.setPosition(slot5red,20);
+        greenslider.setPosition(slot5green,40);
+        blueslider.setPosition(slot5blue,60);
+    }
+    if(whichslider == slot5trash)
+    {
+        add(slot5);
+        remove(slot5trash);
+        setTimer(slot5Update,20);
+    }
+    if(whichslider == load)
+    {
+        println("");
+        setTimer(loadtimer,50);
+    }
+    if(inksize==2)
+    {
+        if(e.getY()<87 && e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),88);
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+        else if(e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),e.getY());
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+    }
+    if(inksize==5)
+    {
+        if(e.getY()<90 && e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),91);
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+        else if(e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),e.getY());
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+    }
+    if(inksize==8)
+    {
+        if(e.getY()<93 && e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),94);
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+        else if(e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),e.getY());
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+    }
+    if(inksize==15)
+    {
+        if(e.getY()<100 && e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),101);
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink)
+        }
+        else if(e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),e.getY());
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+    }
+    if(inksize==60)
+    {
+        if(e.getY()<145 && e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),146);
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+        else if(e.getY()>85)
+        {
+            inkcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+            ink = new Circle(inksize);
+            ink.setPosition(e.getX(),e.getY());
+            ink.setColor(inkcolor);
+            add(ink);
+            arr.push(ink);
+        }
+    }
+}
+
+function moveSlider(e)
+{
+    mouse.setPosition(e.getX()+1,e.getY()+1);
+    if(redslidermove == true)
+    {
+        redslider.setPosition(e.getX()-5,20);
+        if(e.getX()>=281)
+        {
+            redslider.setPosition(275,20);
+        }
+        if(e.getX()<=24)
+        {
+            redslider.setPosition(20,20);
+        }
+    }
+    if(blueslidermove == true)
+    {
+        blueslider.setPosition(e.getX()-5,60);
+        if(e.getX()>=281)
+        {
+            blueslider.setPosition(275,60);
+        }
+        if(e.getX()<=24)
+        {
+            blueslider.setPosition(20,60);
+        }
+    }
+    if(greenslidermove == true)
+    {
+        greenslider.setPosition(e.getX()-5,40);
+        if(e.getX()>=281)
+        {
+            greenslider.setPosition(275,40);
+        }
+        if(e.getX()<=24)
+        {
+            greenslider.setPosition(20,40);
+        }
+    }
+    if(blackslidermove == true)
+    {
+        blackslider.setPosition(e.getX()-5,0);
+        if(e.getX()>=281)
+        {
+            blackslider.setPosition(275,0);
+        }
+        if(e.getX()<=24)
+        {
+            blackslider.setPosition(20,0);
+        }
+        greenslider.setPosition(e.getX()-5,40);
+        if(e.getX()>=281)
+        {
+            greenslider.setPosition(275,40);
+        }
+        if(e.getX()<=24)
+        {
+            greenslider.setPosition(20,40);
+        }
+        blueslider.setPosition(e.getX()-5,60);
+        if(e.getX()>=281)
+        {
+            blueslider.setPosition(275,60);
+        }
+        if(e.getX()<=24)
+        {
+            blueslider.setPosition(20,60);
+        }
+        redslider.setPosition(e.getX()-5,20);
+        if(e.getX()>=281)
+        {
+            redslider.setPosition(275,20);
+        }
+        if(e.getX()<=24)
+        {
+            redslider.setPosition(20,20);
+        }
+    }
+}
+
+function stopMoving(e)
+{
+    redslidermove = false;
+    blueslidermove = false;
+    greenslidermove = false;
+    blackslidermove = false;
+}
+
+function testCircleUpdate()
+{
+    remove(testcircle);
+    testcircle = new Circle(inksize);
+    testcircle.setPosition(350,40);
+    testcolor = new Color(redslider.getX()-20, greenslider.getX()-20, blueslider.getX()-20);
+    testcircle.setColor(testcolor);
+    testcircle.setRadius(inksize);
+    if(inksize>=22)
+    {
+        testcircle.setRadius(22);
+    }
+    add(testcircle);
+    remove(boxline);
+    add(boxline);
+}
+
+function undo(e)
+{
+    if(e.keyCode == Keyboard.letter('Z'))
+    {
+        var destroy = arr.pop();
+        remove(destroy);
+    }
+}
+function cursormove()
+{
+    if(cursorOn = 1)
+    {
+        remove(cursorbutton);
+        remove(cursoricon);
+        cursorbutton.setColor("#37a53c");
+        add(cursorbutton);
+        add(cursoricon);
+        remove(mouse);
+        add(mouse);
+    }
+    if(cursorOn = -1)
+    {
+        remove(cursorbutton);
+        remove(cursoricon);
+        cursorbutton.setColor("#a53737");
+        add(cursorbutton);
+        add(cursoricon);
+        remove(mouse);
+    }
+}
+
+function cursorUpdate()
+{
+    if(cursorOn%2!=0)
+    {
+        remove(cursoricon);
+        remove(cursorbutton);
+        cursorbutton.setColor("#37a53c");
+        add(cursorbutton);
+        add(cursoricon);
+        remove(mouse);
+        add(mouse);
+    }
+    if(cursorOn%2==0)
+    {
+        remove(cursoricon);
+        remove(cursorbutton);
+        cursorbutton.setColor("#a53737");
+        add(cursorbutton);
+        add(cursoricon);
+        remove(mouse);
+    }
+}
+
+function slot1Update()
+{
+    slot1red = redslider.getX();
+    slot1green = greenslider.getX();
+    slot1blue = blueslider.getX();
+    remove(slot1color);
+    remove(slot1);
+    slot1color.setColor(testcolor);
+    add(slot1color);
+    add(slot1);
+}
+function slot2Update()
+{
+    slot2red = redslider.getX();
+    slot2green = greenslider.getX();
+    slot2blue = blueslider.getX();
+    remove(slot2color);
+    remove(slot2);
+    slot2color.setColor(testcolor);
+    add(slot2color);
+    add(slot2);
+}
+function slot3Update()
+{
+    slot3red = redslider.getX();
+    slot3green = greenslider.getX();
+    slot3blue = blueslider.getX();
+    remove(slot3color);
+    remove(slot3);
+    slot3color.setColor(testcolor);
+    add(slot3color);
+    add(slot3);
+}
+function slot4Update()
+{
+    slot4red = redslider.getX();
+    slot4green = greenslider.getX();
+    slot4blue = blueslider.getX();
+    remove(slot4color);
+    remove(slot4);
+    slot4color.setColor(testcolor);
+    add(slot4color);
+    add(slot4);
+}
+function slot5Update()
+{
+    slot5red = redslider.getX();
+    slot5green = greenslider.getX();
+    slot5blue = blueslider.getX();
+    remove(slot5color);
+    remove(slot5);
+    slot5color.setColor(testcolor);
+    add(slot5color);
+    add(slot5);
+}
+function error()
+{
+    remove(errorbackground);
+    remove(errortext);
+    remove(errortext2);
+    remove(goback);
+    add(errorbackground);
+    add(errortext);
+    add(errortext2);
+    add(goback);
+}
+function loadtimer()
+{
+    counter++;
+    if(counter == 2)
+    {
+        var link = readLine("Paste a direct link to your image. If you need to upload your image, a good website to use is img.bb.");
+        var loadedimage = new WebImage(link);
+        loadedimage.setSize(getWidth(),getHeight()-80);
+        loadedimage.setPosition(0,86);
+        loadedimage.setColor(Color.white);
+        add(loadedimage);
+        arr.push(loadedimage);
+        counter = 0;
+        stopTimer(loadtimer);
+    }
+}
+
+
+    if (typeof start === 'function') {
+        start();
+    }
+};
+</script>
+
+</body>
+</html>
