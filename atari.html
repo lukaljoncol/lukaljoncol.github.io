@@ -1,0 +1,892 @@
+
+<html>
+<head>
+<title>colin's big atari mashup</title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+<script type="text/javascript" src="https://static.codehs.com/gulp/26d66975f8033d706c03933209c633cc0736d9ae/chs-js-lib/chs.js"></script>
+
+
+<style>
+canvas {
+    border: 1px solid black;
+    display: inline-block;
+    vertical-align: top;
+}
+
+pre {
+    border: 1px solid black;
+    display: inline-block;
+    width: 400px;
+    height: 500px;
+    background-color: #F5F5F5;
+}
+</style>
+
+</head>
+
+<body>
+<h1>colin's big atari mashup</h1>
+
+
+
+<canvas
+width="400"
+height="500"
+class="codehs-editor-canvas"></canvas>
+<pre id="console"></pre>
+
+<script>
+window.onload = function() {
+
+    setSize(750,getHeight());
+/*
+    ______________________________________
+   |                                      |
+   |    CONTENTS                          |
+   |                                      |
+   |    0. Menu                           |
+   |        0.1 Menu variables            |
+   |        0.2 Menu code                 |
+   |    1. Freeway                        |
+   |        1.1 Car variables             |
+   |        1.2 Other Freeway variables   |
+   |        1.3 Freeway code              |
+   |    2. Pong                           |
+   |        2.1 Pong variables            |
+   |        2.2 Pong code                 |
+   |______________________________________|
+   
+*/
+
+/*
+      __  __ ______ _   _ _    _ 
+     |  \/  | 
+     ____| \  / | 
+     |__  |  \| | |  | |
+     | |\/| | 
+     
+     __| | . ` | 
+     | | ___|_| \_|\____/ 
+*/
+
+/*
+
+        MENU VARIABLES
+        
+*/
+var menubackground = new Rectangle(1800,1800);
+menubackground.setPosition(0,0);
+menubackground.setColor("#ff5454");
+var menulogo = new Text("colin's ''big'' atari mashup","25pt Arial");
+menulogo.setColor(Color.WHITE);
+menulogo.setPosition(getWidth()/2-200,40);
+var freewaylogo = new Rectangle(125,63);
+freewaylogo.setColor(Color.BLACK);
+freewaylogo.setPosition(50,110);
+var freewaylogotext = new Text("freeway","10pt Arial");
+freewaylogotext.setColor(Color.WHITE);
+freewaylogotext.setPosition(60,130);
+var ponglogo = new Rectangle(125,63);
+ponglogo.setColor(Color.BLACK);
+ponglogo.setPosition(getWidth()-175,110);
+var ponglogotext = new Text("pong","10pt Arial");
+ponglogotext.setColor(Color.WHITE);
+ponglogotext.setPosition(ponglogo.getX()+10,ponglogo.getY()+20);
+/*
+var kaboomlogo = new WebImage("http://i.xomf.com/yjfyf.png");
+kaboomlogo.setSize(125,62);
+kaboomlogo.setPosition(50,195);
+*/
+var menubutton = new WebImage("https://image.ibb.co/jMzLuS/menubutton.png");
+menubutton.setSize(27,9);
+menubutton.setPosition(5,getHeight()-16);
+
+/*
+
+        MENU CODE
+        
+*/
+
+function start()
+{
+    add(menubackground);
+    add(menulogo);
+    add(freewaylogo);
+    add(freewaylogotext);
+    add(ponglogo);
+    add(ponglogotext);
+    //add(kaboomlogo);
+    mouseClickMethod(selectgame);
+}
+
+function selectgame(e)
+{
+    var whichgame = getElementAt(e.getX(), e.getY());
+    if(whichgame == freewaylogo)
+    {
+        removeAll();
+        freewaystart();
+    }
+    if(whichgame == ponglogo)
+    {
+        removeAll();
+        pongstart();
+    }
+    if(whichgame == menubutton)
+    {
+        stopTimer(carsmove);
+        stopTimer(freewaymove);
+        stopTimer(freewaypoints);
+        stopTimer(freewaytimer);
+        stopTimer(pongpoints);
+	    stopTimer(pongdraw);
+	    stopTimer(pongpaddlemove);
+	    removeAll();
+	    start();
+    }
+}
+
+
+/*       _____                                
+        |  ___/                                
+
+*/
+
+/*
+
+        CAR VARIABLES
+        
+*/
+
+//This is not smart, this is bad, do not do this
+// - Colin
+
+var car1 = new Rectangle(25,15);
+var car1color = Randomizer.nextColor();
+var car1speed = Randomizer.nextInt(5,17);
+car1.setColor(car1color);
+car1.setPosition(-20,100);
+var car2 = new Rectangle(25,15);
+var car2color = Randomizer.nextColor();
+var car2speed = Randomizer.nextInt(5,17);
+car2.setColor(car2color);
+car2.setPosition(-20,120);
+var car3 = new Rectangle(25,15);
+var car3color = Randomizer.nextColor();
+var car3speed = Randomizer.nextInt(-5,-17);
+car3.setColor(car3color);
+car3.setPosition(getWidth()-5,140);
+var car4 = new Rectangle(25,15);
+var car4color = Randomizer.nextColor();
+var car4speed = Randomizer.nextInt(-5,-17);
+car4.setColor(car4color);
+car4.setPosition(getWidth()-5,160);
+var car5 = new Rectangle(25,15);
+var car5color = Randomizer.nextColor();
+var car5speed = Randomizer.nextInt(-5,-17);
+car5.setColor(car5color);
+car5.setPosition(getWidth()-5,180);
+var car6 = new Rectangle(25,15);
+var car6color = Randomizer.nextColor();
+var car6speed = Randomizer.nextInt(5,17);
+car6.setColor(car6color);
+car6.setPosition(-20,200);
+var car7 = new Rectangle(25,15);
+var car7color = Randomizer.nextColor();
+var car7speed = Randomizer.nextInt(-5,-17);
+car7.setColor(car7color);
+car7.setPosition(getWidth()-5,220);
+var car8 = new Rectangle(25,15);
+var car8color = Randomizer.nextColor();
+var car8speed = Randomizer.nextInt(5,17);
+car8.setColor(car8color);
+car8.setPosition(-20,240);
+var car9 = new Rectangle(25,15);
+var car9color = Randomizer.nextColor();
+var car9speed = Randomizer.nextInt(5,17);
+car9.setColor(car9color);
+car9.setPosition(-20,260);
+var car10 = new Rectangle(25,15);
+var car10color = Randomizer.nextColor();
+var car10speed = Randomizer.nextInt(-5,-17);
+car10.setColor(car10color);
+car10.setPosition(getWidth()-5,280);
+var car11 = new Rectangle(25,15);
+var car11color = Randomizer.nextColor();
+var car11speed = Randomizer.nextInt(-5,-17);
+car11.setColor(car11color);
+car11.setPosition(getWidth()-5,300);
+var car12 = new Rectangle(25,15);
+var car12color = Randomizer.nextColor();
+var car12speed = Randomizer.nextInt(5,17);
+car12.setColor(car12color);
+car12.setPosition(-20,320);
+var car13 = new Rectangle(25,15);
+var car13color = Randomizer.nextColor();
+var car13speed = Randomizer.nextInt(5,17);
+car13.setColor(car13color);
+car13.setPosition(-20,340);
+var car14 = new Rectangle(25,15);
+var car14color = Randomizer.nextColor();
+var car14speed = Randomizer.nextInt(5,17);
+car14.setColor(car14color);
+car14.setPosition(-20,360);
+var car15 = new Rectangle(25,15);
+var car15color = Randomizer.nextColor();
+var car15speed = Randomizer.nextInt(-5,-17);
+car15.setColor(car15color);
+car15.setPosition(getWidth()-5,380);
+var car16 = new Rectangle(25,15);
+var car16color = Randomizer.nextColor();
+var car16speed = Randomizer.nextInt(-5,-17);
+car16.setColor(car16color);
+car16.setPosition(getWidth()-5,400);
+
+/*
+
+    -------------------
+    
+*/
+
+/*
+
+        OTHER VARIABLES
+        
+*/
+
+var sidewalkstart = new Rectangle(getWidth(),60);
+sidewalkstart.setPosition(0,getHeight()-60);
+sidewalkstart.setColor("#d6d6d6");
+var sidewalkend = new Rectangle(getWidth(),95);
+sidewalkend.setPosition(0,0);
+sidewalkend.setColor("#d6d6d6");
+var road = new Rectangle(getWidth(),getHeight());
+road.setColor("#3f3f3f");
+road.setPosition(0,0);
+var freewayplayer1 = new Circle(6);
+freewayplayer1.setColor("#ff8282");
+freewayplayer1.setPosition(125,getHeight()-30);
+var freewayplayer2 = new Circle(6);
+freewayplayer2.setColor("#82b8ff");
+freewayplayer2.setPosition(getWidth()-125,getHeight()-30);
+var freewayplayer1dy = 0;
+var freewayplayer2dy = 0;
+var freewayplayer1points = 0;
+var freewayplayer2points = 0;
+var freewayplayer1pointstext = new Text("donate now");
+var freewayplayer2pointstext = new Text("donate now");
+var freewaytime = 120;
+var freewaytimetext = new Text("Time left: 120", "10pt Arial");
+freewaytimetext.setColor(Color.BLACK);
+freewaytimetext.setPosition(getWidth()-81,12);
+
+/*
+
+    -------------------
+    
+*/
+
+/*
+
+        FREEWAY CODE
+        
+*/
+
+function freewaystart()
+{
+    freewayplayer1points = 0;
+    freewayplayer2points = 0;
+    freewaytime = 120;
+    freewayplayer1.setPosition(125,getHeight()-30);
+    freewayplayer2.setPosition(getWidth()-125,getHeight()-30);
+    add(road);
+    add(sidewalkstart);
+    add(sidewalkend);
+    add(freewayplayer1);
+    add(freewayplayer2);
+    add(car1);
+    add(car2);
+    add(car3);
+    add(car4);
+    add(car5);
+    add(car6);
+    add(car7);
+    add(car8);
+    add(car9);
+    add(car10);
+    add(car11);
+    add(car12);
+    add(car13);
+    add(car14);
+    add(car15);
+    add(car16);
+    add(freewayplayer1pointstext);
+    add(freewaytimetext);
+    setTimer(carsmove,40);
+    setTimer(freewaymove,40);
+	keyDownMethod(freewaydirections);
+	keyUpMethod(freewaystop);
+	setTimer(freewaypoints,40);
+	setTimer(freewaytimer,1000);
+	add(menubutton);
+}
+
+function carsmove()
+{
+    
+    // Right moving cars
+    
+    car1.move(car1speed,0);
+    if(car1.getX()>getWidth())
+    {
+        car1.move(-getWidth()-25,0);
+        car1speed = Randomizer.nextInt(5,17);
+    }
+    car2.move(car2speed,0);
+    if(car2.getX()>getWidth())
+    {
+        car2.move(-getWidth()-25,0);
+        car2speed = Randomizer.nextInt(5,17);
+    }
+    car6.move(car6speed,0);
+    if(car6.getX()>getWidth())
+    {
+        car6.move(-getWidth()-25,0);
+        car6speed = Randomizer.nextInt(5,17);
+    }
+    car8.move(car8speed,0);
+    if(car8.getX()>getWidth())
+    {
+        car8.move(-getWidth()-25,0);
+        car8speed = Randomizer.nextInt(5,17);
+    }
+    car9.move(car9speed,0);
+    if(car9.getX()>getWidth())
+    {
+        car9.move(-getWidth()-25,0);
+        car9speed = Randomizer.nextInt(5,17);
+    }
+    car12.move(car12speed,0);
+    if(car12.getX()>getWidth())
+    {
+        car12.move(-getWidth()-25,0);
+        car12speed = Randomizer.nextInt(5,17);
+    }
+    car13.move(car13speed,0);
+    if(car13.getX()>getWidth())
+    {
+        car13.move(-getWidth()-25,0);
+        car13speed = Randomizer.nextInt(5,17);
+    }
+    car14.move(car14speed,0);
+    if(car14.getX()>getWidth())
+    {
+        car14.move(-getWidth()-25,0);
+        car14speed = Randomizer.nextInt(5,17);
+    }
+    
+    // ---
+    
+    //Left moving cars
+    
+    car3.move(car3speed,0);
+    if(car3.getX()<-25)
+    {
+        car3.move(getWidth()+25,0);
+        car3speed = Randomizer.nextInt(-5,-17);
+    }
+    car4.move(car4speed,0);
+    if(car4.getX()<-25)
+    {
+        car4.move(getWidth()+25,0);
+        car4speed = Randomizer.nextInt(-5,-17);
+    }
+    car5.move(car5speed,0);
+    if(car5.getX()<-25)
+    {
+        car5.move(getWidth()+25,0);
+        car5speed = Randomizer.nextInt(-5,-17);
+    }
+    car7.move(car7speed,0);
+    if(car7.getX()<-25)
+    {
+        car7.move(getWidth()+25,0);
+        car7speed = Randomizer.nextInt(-5,-17);
+    }
+    car10.move(car10speed,0);
+    if(car10.getX()<-25)
+    {
+        car10.move(getWidth()+25,0);
+        car10speed = Randomizer.nextInt(-5,-17);
+    }
+    car11.move(car11speed,0);
+    if(car11.getX()<-25)
+    {
+        car11.move(getWidth()+25,0);
+        car11speed = Randomizer.nextInt(-5,-17);
+    }
+    car15.move(car15speed,0);
+    if(car15.getX()<-25)
+    {
+        car15.move(getWidth()+25,0);
+        car15speed = Randomizer.nextInt(-5,-17);
+    }
+    car16.move(car16speed,0);
+    if(car16.getX()<-25)
+    {
+        car16.move(getWidth()+25,0);
+        car16speed = Randomizer.nextInt(-5,-17);
+    }
+}
+
+function freewaymove()
+{
+    freewayplayer1.move(0,freewayplayer1dy);
+    freewayplayer2.move(0,freewayplayer2dy);
+    if(freewayplayer1.getY()+7>getHeight())
+    {
+        freewayplayer1.setPosition(125,getHeight()-6);
+    }
+    if(freewayplayer2.getY()+7>getHeight())
+    {
+        freewayplayer2.setPosition(getWidth()-125,getHeight()-6);
+    }
+    var freewayplayer1elem = getElementAt(freewayplayer1.getX(),freewayplayer1.getY());
+    var freewayplayer2elem = getElementAt(freewayplayer2.getX(),freewayplayer2.getY());
+    if(freewayplayer1elem != freewayplayer1)
+    {
+        freewayplayer1.setPosition(125,getHeight()-30);
+    }
+    if(freewayplayer2elem != freewayplayer2)
+    {
+        freewayplayer2.setPosition(getWidth()-125,getHeight()-30);
+    }
+}
+
+function freewaydirections(e)
+{
+    if(e.keyCode == Keyboard.UP)
+    {
+        freewayplayer2dy = -5;
+    }
+    if(e.keyCode == Keyboard.DOWN)
+    {
+        freewayplayer2dy = 5;
+    }
+    if(e.keyCode == Keyboard.letter('W'))
+    {
+        freewayplayer1dy = -5;
+    }
+    if(e.keyCode == Keyboard.letter('S'))
+    {
+        freewayplayer1dy = 5;
+    }
+}
+
+function freewaystop(e)
+{
+    if(e.keyCode == Keyboard.UP)
+    {
+        freewayplayer2dy = 0;
+    }
+    if(e.keyCode == Keyboard.DOWN)
+    {
+        freewayplayer2dy = 0;
+    }
+    if(e.keyCode == Keyboard.letter('W'))
+    {
+        freewayplayer1dy = 0;
+    }
+    if(e.keyCode == Keyboard.letter('S'))
+    {
+        freewayplayer1dy = 0;
+    }
+}
+
+function freewaypoints()
+{
+    remove(freewayplayer1pointstext);
+    if(freewayplayer1.getY()<60)
+    {
+        freewayplayer1points++;
+        freewayplayer1.setPosition(125,getHeight()-30);
+    }
+    freewayplayer1pointstext = new Text("Player 1: " + freewayplayer1points, "10pt Arial");
+    freewayplayer1pointstext.setColor("#ff8282");
+    freewayplayer1pointstext.setPosition(2,12);
+    add(freewayplayer1pointstext);
+    remove(freewayplayer2pointstext);
+    if(freewayplayer2.getY()<60)
+    {
+        freewayplayer2points++;
+        freewayplayer2.setPosition(getWidth()-125,getHeight()-30);
+    }
+    freewayplayer2pointstext = new Text("Player 2: " + freewayplayer2points, "10pt Arial");
+    freewayplayer2pointstext.setColor("#82b8ff");
+    freewayplayer2pointstext.setPosition(2,24);
+    add(freewayplayer2pointstext);
+}
+
+function freewaytimer()
+{
+    remove(freewaytimetext);
+    freewaytime--;
+    freewaytimetext = new Text("Time left: " + freewaytime, "10pt Arial");
+    freewaytimetext.setPosition(getWidth()-81,12);
+    freewaytimetext.setColor(Color.BLACK);
+    if(freewaytime <= 10)
+    {
+        freewaytimetext.setColor(Color.RED);
+    }
+    add(freewaytimetext);
+    if(freewaytime == 0)
+    {
+        if(freewayplayer1points == freewayplayer2points)
+        {
+            removeAll();
+    	    var wintext = new Text("You have tied.", "20pt Arial");
+    	    wintext.setPosition(100,100);
+    	    add(wintext);
+            freewayplayer1pointstext = new Text("Player 1: " + freewayplayer1points, "15pt Arial");
+            freewayplayer1pointstext.setColor("#ff8282");
+            freewayplayer1pointstext.setPosition(100,125);
+            add(freewayplayer1pointstext);
+            freewayplayer2pointstext = new Text("Player 2: " + freewayplayer2points, "15pt Arial");
+            freewayplayer2pointstext.setColor("#82b8ff");
+            freewayplayer2pointstext.setPosition(100,150);
+            add(freewayplayer2pointstext);
+            stopTimer(carsmove);
+            stopTimer(freewaymove);
+    	    stopTimer(freewaypoints);
+    	    stopTimer(freewaytimer);
+    	    add(menubutton);
+        }
+        if(freewayplayer1points > freewayplayer2points)
+        {
+            removeAll();
+    	    var wintext = new Text("Player 1 has won.", "20pt Arial");
+    	    wintext.setColor("#ff8282");
+    	    wintext.setPosition(100,100);
+    	    add(wintext);
+            freewayplayer1pointstext = new Text("Player 1: " + freewayplayer1points, "15pt Arial");
+            freewayplayer1pointstext.setColor("#ff8282");
+            freewayplayer1pointstext.setPosition(100,125);
+            add(freewayplayer1pointstext);
+            freewayplayer2pointstext = new Text("Player 2: " + freewayplayer2points, "15pt Arial");
+            freewayplayer2pointstext.setColor("#82b8ff");
+            freewayplayer2pointstext.setPosition(100,150);
+            add(freewayplayer2pointstext);
+            stopTimer(carsmove);
+            stopTimer(freewaymove);
+    	    stopTimer(freewaypoints);
+    	    stopTimer(freewaytimer);
+    	    add(menubutton);
+        }
+        if(freewayplayer2points > freewayplayer1points)
+        {
+            removeAll();
+    	    var wintext = new Text("Player 2 has won.", "20pt Arial");
+    	    wintext.setColor("#82b8ff");
+    	    wintext.setPosition(100,100);
+    	    add(wintext);
+            freewayplayer1pointstext = new Text("Player 1: " + freewayplayer1points, "15pt Arial");
+            freewayplayer1pointstext.setColor("#ff8282");
+            freewayplayer1pointstext.setPosition(100,125);
+            add(freewayplayer1pointstext);
+            freewayplayer2pointstext = new Text("Player 2: " + freewayplayer2points, "15pt Arial");
+            freewayplayer2pointstext.setColor("#82b8ff");
+            freewayplayer2pointstext.setPosition(100,150);
+            add(freewayplayer2pointstext);
+            stopTimer(carsmove);
+            stopTimer(freewaymove);
+    	    stopTimer(freewaypoints);
+    	    stopTimer(freewaytimer);
+    	    add(menubutton);
+        }
+    }
+}
+
+/*
+
+    -------------------
+    
+*/
+
+
+/*      ______________________________
+        ___  __ \  __ \_  __ \_  __ `/
+        __  /_/ / /_/ /  / / /  /_/ / 
+        _  .___/\____//_/ /_/_\__, /  ography
+        /_/                  /____/   
+*/
+
+/*
+        PONG VARIABLES
+*/
+
+var pongbackground = new Rectangle(getWidth(),getHeight());
+var pongBALL_SIZE = 5;
+var pongball;
+var pongballoutside;
+var pongdx = 5;
+var pongdy = 3;
+var pongplayer1paddleinside = new Rectangle(10,75);
+pongplayer1paddleinside.setPosition(6,6);
+var pongplayer1paddleoutside = new Rectangle(16,81);
+pongplayer1paddleoutside.setPosition(3,3);
+pongplayer1paddleoutside.setColor("#f44242");
+var pongplayer1dy = 0;
+var pongplayer2paddleinside = new Rectangle(10,75);
+pongplayer2paddleinside.setPosition(getWidth()-6-10,getHeight()-6-75);
+var pongplayer2paddleoutside = new Rectangle(16,81);
+pongplayer2paddleoutside.setPosition(getWidth()-3-16,getHeight()-3-81);
+pongplayer2paddleoutside.setColor("#4192f4");
+var pongplayer2dy = 0;
+var pongredpointstext = new Text("Donate now");
+var pongbluepointstext = new Text("Donate now");
+var pongredpoints = 0;
+var pongbluepoints = 0;
+var pongbordertop = new Rectangle(getWidth(),10);
+var pongborderbottom = new Rectangle(getWidth(),10);
+pongbordertop.setPosition(0,40);
+pongborderbottom.setPosition(0,getHeight()-43);
+pongbordertop.setColor(Color.WHITE);
+pongborderbottom.setColor(Color.WHITE);
+var pongtop = new Rectangle(getWidth(),47);
+var pongbottom = new Rectangle(getWidth(),40);
+pongtop.setPosition(0,0);
+pongbottom.setPosition(0,getHeight()-40);
+var pongtime = 0;
+var pongtimer = new Text("Time left: " + pongtime, "10pt Arial");
+pongtimer.setPosition(10,10);
+var pongwinner;
+
+/*
+        ---------
+*/
+
+/*
+        PONG CODE
+*/
+
+function pongstart()
+{
+    pongredpoints = 0;
+    pongbluepoints = 0;
+    pongtime = 120;
+    add(pongbackground);
+	setTimer(thepongtimer,1000);
+    pongballoutside = new Circle(8);
+    pongballoutside.setColor(Color.WHITE);
+    pongballoutside.setPosition(getWidth()/2,getHeight()/2);
+    add(pongballoutside);
+	pongball = new Circle(pongBALL_SIZE);
+	pongball.setPosition(getWidth()/2,getHeight()/2);
+	add(pongball);
+    add(pongplayer1paddleoutside);
+    add(pongplayer1paddleinside);
+    add(pongplayer2paddleoutside);
+    add(pongplayer2paddleinside);
+    add(pongbordertop);
+    add(pongborderbottom);
+    add(pongtop);
+    add(pongbottom);
+    add(pongredpointstext);
+    add(pongbluepointstext);
+    setTimer(pongpoints,1);
+	setTimer(pongdraw, 20);
+	setTimer(pongpaddlemove,40);
+	keyDownMethod(pongdirections);
+	keyUpMethod(pongstop);
+	add(menubutton);
+}
+
+function pongdraw()
+{
+	pongcheckWalls();
+	var pongballelement = getElementAt(pongball.getX(),pongball.getY());
+	if(pongballelement!=pongball)
+	{
+	    pongdx = -pongdx;
+	    if(pongballelement == pongbordertop || pongballelement == pongborderbottom)
+	    {
+	        pongdx = -pongdx;
+	        pongdy = -pongdy;
+	    }
+	}
+	pongballoutside.move(pongdx, pongdy);
+	pongball.move(pongdx, pongdy);
+}
+
+function pongpoints()
+{
+    remove(pongredpointstext);
+    remove(pongbluepointstext);
+    pongredpointstext = new Text(pongredpoints, "20pt Arial");
+    pongredpointstext.setPosition(getWidth()/2-100,30);
+    pongredpointstext.setColor("#f44242");
+    pongbluepointstext = new Text(pongbluepoints, "20pt Arial");
+    pongbluepointstext.setPosition(getWidth()/2+100,30);
+    pongbluepointstext.setColor("#4192f4");
+    add(pongredpointstext);
+    add(pongbluepointstext);
+}
+
+function pongcheckWalls()
+{
+	//red point
+	if(pongballoutside.getX() - pongballoutside.getRadius() > getWidth())
+	{
+		pongball.setPosition(getWidth()/2,getHeight()/2);
+		pongballoutside.setPosition(getWidth()/2,getHeight()/2);
+		pongredpoints++;
+	}
+	
+	//blue point
+	if(pongballoutside.getX() + pongballoutside.getRadius() < 0)
+	{
+		pongball.setPosition(getWidth()/2,getHeight()/2);
+		pongballoutside.setPosition(getWidth()/2,getHeight()/2);
+		pongbluepoints++;
+	}
+	
+	//bounce off bottom wall
+	if(pongballoutside.getY() + pongballoutside.getRadius() > getHeight())
+	{
+		pongdy = -pongdy;
+	}
+	
+	//bounce off top wall
+	if(pongballoutside.getY() - pongballoutside.getRadius() < 0)
+	{
+		pongdy = -pongdy;
+	}
+}
+
+function pongpaddlemove()
+{
+    pongplayer1paddleinside.move(0,pongplayer1dy);
+    pongplayer1paddleoutside.move(0,pongplayer1dy);
+    if(pongplayer1paddleoutside.getY()<0)
+    {
+        pongplayer1paddleoutside.setPosition(3,0);
+        pongplayer1paddleinside.setPosition(6,3);
+    }
+    if(pongplayer1paddleoutside.getY()+81>getHeight())
+    {
+        pongplayer1paddleoutside.setPosition(3,getHeight()-81);
+        pongplayer1paddleinside.setPosition(6,getHeight()-78);
+    }
+    pongplayer2paddleinside.move(0,pongplayer2dy);
+    pongplayer2paddleoutside.move(0,pongplayer2dy);
+    if(pongplayer2paddleoutside.getY()<0)
+    {
+        pongplayer2paddleoutside.setPosition(getWidth()-3-16,0);
+        pongplayer2paddleinside.setPosition(getWidth()-6-10,3);
+    }
+    if(pongplayer2paddleoutside.getY()+81>getHeight())
+    {
+        pongplayer2paddleoutside.setPosition(getWidth()-3-16,getHeight()-81);
+        pongplayer2paddleinside.setPosition(getWidth()-6-10,getHeight()-78);
+    }
+}
+
+function pongdirections(e)
+{
+    if(e.keyCode == Keyboard.letter('W'))
+    {
+        pongplayer1dy = -12;
+    }
+    if(e.keyCode == Keyboard.letter('S'))
+    {
+        pongplayer1dy = 12;
+    }
+    if(e.keyCode == Keyboard.UP)
+    {
+        pongplayer2dy = -12;
+    }
+    if(e.keyCode == Keyboard.DOWN)
+    {
+        pongplayer2dy = 12;
+    }
+}
+
+function pongstop(e)
+{
+    if(e.keyCode == Keyboard.letter('W'))
+    {
+        pongplayer1dy = 0;
+    }
+    if(e.keyCode == Keyboard.letter('S'))
+    {
+        pongplayer1dy = 0;
+    }
+    if(e.keyCode == Keyboard.UP)
+    {
+        pongplayer2dy = 0;
+    }
+    if(e.keyCode == Keyboard.DOWN)
+    {
+        pongplayer2dy = 0;
+    }
+}
+
+function thepongtimer()
+{
+    remove(pongtimer);
+    pongtimer = new Text("Time left: " + pongtime, "10pt Arial");
+    pongtimer.setColor(Color.white);
+    if(pongtime <= 10)
+    {
+        pongtimer.setColor(Color.red);
+    }
+    add(pongtimer);
+    if(pongtime <= 0)
+    {
+        whatthepong();
+        stopTimer(thepongtimer);
+    }
+    pongtime--;
+}
+
+function whatthepong()
+{
+    stopTimer(pongpoints);
+    stopTimer(pongdraw);
+    if(pongredpoints > pongbluepoints)
+    {
+        pongwinner = new Text("Player 1 is the winner.");
+        pongwinner.setPosition(100,200);
+        pongwinner.setColor("#f44242");
+        add(pongwinner);
+    }
+    if(pongbluepoints > pongredpoints)
+    {
+        pongwinner = new Text("Player 2 is the winner.");
+        pongwinner.setPosition(100,200);
+        pongwinner.setColor("#4192f4");
+        add(pongwinner);
+    }
+    if(pongredpoints == pongbluepoints)
+    {
+        pongwinner = new Text("There has been a tie. Fight to the death.");
+        pongwinner.setPosition(100,200);
+        pongwinner.setColor(Color.white);
+        add(pongwinner);
+    }
+}
+/*
+        ---------
+*/
+
+
+    if (typeof start === 'function') {
+        start();
+    }
+};
+</script>
+
+</body>
+</html>
