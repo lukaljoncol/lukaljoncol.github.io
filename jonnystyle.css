@@ -1,0 +1,21 @@
+
+h1{
+    font-family:TimesnewRoman;
+    text-align:center;
+}
+
+.header{
+    border-color:black;
+    border-width:27px;
+    border-style:solid;
+    background-color:red;
+}
+
+#mathVR{
+    height:20px; 
+    width:100px; 
+    margin: -20px -50px; 
+    position:relative;
+    top:50%; 
+    left:50%;   
+}
