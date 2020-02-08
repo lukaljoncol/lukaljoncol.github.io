@@ -1,0 +1,471 @@
+
+<html>
+<head>
+<title>Highway Game</title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+<script type="text/javascript" src="https://static.codehs.com/gulp/52f3938e9af19c3c38e03cee4eee4cb4b94cf808/chs-js-lib/chs.js"></script>
+
+</style>
+
+</head>
+
+<body>
+<h1>Highway Game</h1>
+
+
+
+<canvas
+width="400"
+height="500"
+class="codehs-editor-canvas"></canvas>
+<pre id="console"></pre>
+
+<script>
+window.onload = function() {
+
+    setSize(600,500);
+var gameSpeed = 50;
+var current = null;
+var startup = true;
+
+//Player variables
+var playerOne;
+var X1=0;
+var Y1=0;
+var playerTwo;
+var X2=0;
+var Y2=0;
+
+//globals for highway
+var carsL = [];
+var carsR = [];
+
+//Hud variables
+var timeRemaining;
+var backgroundHUD;
+var LineHUD;
+var line;
+var playerOneText;
+var playerOneScore;
+var playerTwoText;
+var playerTwoScore;
+var gamespeed;
+
+//Menu Selectors
+var slider;
+var highway;
+
+//Scores for players
+var oneScore = 0;
+var twoScore = 0;
+var score1temp = 0;
+var score2temp = 0;
+var scoreText1 = new Text(score1temp, "25pt roboto");
+var scoreText2 = new Text(score2temp, "25pt roboto");
+
+//Scenes bools
+var GAMERUNNING = false;
+var MENU = false;
+var HIGHWAY = false;
+
+function start()
+{
+    hud();
+    mainMenu();
+    mouseDownMethod(clickDown);
+    mouseUpMethod(clickUp);
+    mouseDragMethod(clickDrag);
+    keyDownMethod(keyDown);
+    keyUpMethod(keyUp);
+}
+
+//This controls the HUD section at the bottom of the screen
+function hud()
+{
+    if (startup)
+    {
+        //visual stuff
+        backgroundHUD = new Rectangle(getWidth(), 100);
+        backgroundHUD.setPosition(0, getHeight() - 100);
+        backgroundHUD.setColor("#727a82");
+        LineHUD = new Line(0, getHeight()-100, getWidth(), getHeight()-100);
+        gamespeed = new WebImage("https://image.ibb.co/e6xTZS/Speed.png");
+        gamespeed.setPosition(getWidth()-220, getHeight() - (gamespeed.getHeight() + 60));
+        
+        //controls game speed
+        slider = new WebImage("https://image.ibb.co/heqvdn/slider.png");
+        slider.setSize(50,25);
+        slider.setPosition((getWidth()-20) - 200, getHeight()-(80 + slider.getHeight()/2));
+        line = new Line(getWidth()-220, getHeight()-80, getWidth() - 20, getHeight() - 80);
+        
+        //Player and player scores
+        //player one
+        playerOneText = new Text("Player 1", "15pt Roboto");
+        playerOneText.setPosition(50, getHeight()-75);
+        playerOneText.setColor(Color.red);
+        playerOneScore = new Text(twoScore, "35pt Roboto");
+        playerOneScore.setPosition((playerOneText.getX()+playerOneText.getWidth()/2)-playerOneScore.getWidth()/2, getHeight()-20);
+        playerOneScore.setColor(Color.red);
+        //player two
+        playerTwoText = new Text("Player 2", "15pt Roboto");
+        playerTwoText.setPosition(150, getHeight()-75);
+        playerTwoText.setColor(Color.blue);
+        playerTwoScore = new Text(twoScore, "35pt Roboto");
+        playerTwoScore.setPosition((playerTwoText.getX()+playerTwoText.getWidth()/2)-playerTwoScore.getWidth()/2, getHeight()-20);
+        playerTwoScore.setColor(Color.blue);
+        startup = false;
+    }
+    playerOneScore.setText(oneScore);
+    playerTwoScore.setText(twoScore);
+    add(backgroundHUD); 
+    add(LineHUD);
+    add(gamespeed);
+    add(line);
+    add(slider);
+    add(playerOneText);
+    add(playerOneScore);
+    add(playerTwoText);
+    add(playerTwoScore);
+}
+
+// This is the home menu for all the games
+function mainMenu()
+{
+    MENU = true;
+    highway = new Rectangle(75, 50);
+    highway.setPosition(getWidth()/8, (getHeight()-100)/4);
+    add(highway);
+}
+
+
+// For when the use clicks
+function clickDown(e)
+{
+    //gets the click element
+    current = getElementAt(e.getX(), e.getY());
+    
+    //checks what game is clicked if on menu game
+    if (MENU)
+    {
+        if (current == highway)
+        {
+            MENU = false;
+            HIGHWAY = true;
+            removeAll();
+            hud();
+            highwayWorld();
+        }
+    }
+    
+}
+
+//sets current to null on up click
+function clickUp(e)
+{
+    current = null;
+}
+
+//drags the slider
+function clickDrag(e)
+{
+    if (current == slider)
+    {
+        if (e.getX() >= getWidth()-220 && e.getX() <= getWidth() - 20)
+        current.setPosition(e.getX() - current.getWidth()/2, getHeight() - (80 + slider.getHeight()/2));
+        remove(current);
+        add(current);
+        if(GAMERUNNING)
+        {
+            stopTimer(game);
+            setTimer(game, 41 - ((slider.getX()-355)/5));
+        }
+        
+    }
+
+}
+
+
+//determines action when key is pressed
+function keyDown(e)
+{
+    if(e.keyCode == Keyboard.letter('w'))
+    {
+        Y1 = -3;
+    }
+    if(e.keyCode == Keyboard.letter('s'))
+    {
+        Y1 = 3;
+    }
+    if(e.keyCode == Keyboard.UP)
+    {
+        Y2 = -3;
+    }
+    if(e.keyCode == Keyboard.DOWN)
+    {
+        Y2 = 3;
+    }
+}
+
+//determines action when key is released
+function keyUp(e)
+{
+    if(e.keyCode == Keyboard.letter('w'))
+    {
+        Y1 = 0;
+    }
+    if(e.keyCode == Keyboard.letter('s'))
+    {
+        Y1 = 0;
+    }
+    if(e.keyCode == Keyboard.UP)
+    {
+        Y2 = 0;
+    }
+    if(e.keyCode == Keyboard.DOWN)
+    {
+        Y2 = 0;
+    }
+}
+
+//creates the Highway background
+function highwayWorld()
+{
+    
+    //sidewalks and background
+    var background = new Rectangle(getWidth(), getHeight()-101)
+    background.setColor(Color.grey);
+    add(background);
+    var sidewalk = new Rectangle(getWidth(), 75);
+    sidewalk.setColor("#8b8d8e");
+    add(sidewalk);
+    var sidewalk = new Rectangle(getWidth(), 75);
+    sidewalk.setPosition(0, getHeight() - (101+ sidewalk.getHeight()))
+    sidewalk.setColor("#8b8d8e");
+    add(sidewalk);
+    
+    
+    
+    //All those lines
+    //black lines
+    var line1 = new Line(0, getHeight() - (101+ sidewalk.getHeight()), getWidth(), getHeight() - (101+ sidewalk.getHeight()));
+    line1.setColor(Color.black);
+    add(line1);
+    var line2 = new Line(0, 75, getWidth(), 75);
+    line2.setColor(Color.black);
+    add(line2);
+    
+    //yellow lines
+    var line = new Line(0, getHeight() - (101+ sidewalk.getHeight() + 140), getWidth(), getHeight() - (101+ sidewalk.getHeight() + 140));
+    line.setColor(Color.yellow);
+    add(line);
+    var line = new Line(0, getHeight() - (101+ sidewalk.getHeight() + 136), getWidth(), getHeight() - (101+ sidewalk.getHeight() + 136));
+    line.setColor(Color.yellow);
+    add(line);
+    
+    //white lines
+    for (var i = 0; i < 4; i++)
+    {
+        var line = new Line (0, 94 + (i*23), getWidth(), 94 + (i*23));
+        line.setColor(Color.white);
+        add(line);
+    }
+
+    for (var i = 0; i < 4; i++)
+    {
+        var line = new Line (0, 215 + (i*23), getWidth(), 215 + (i*23));
+        line.setColor(Color.white);
+        add(line);
+    }
+    
+    //rectangles for dashes
+    for (var i = 0; i < 15; i++)
+    {
+        var rectangle = new Rectangle(20, line1.getY() - line2.getY() - 2);
+        rectangle.setPosition((i*40) + 10, line2.getY() + 1);
+        rectangle.setColor(Color.grey);
+        add(rectangle);
+    }
+    
+    //creates cars
+    for (var i = 0; i < carsL.length; i++)
+    {
+        carsL.remove(0);
+    }
+    for (var i = 0; i < 5; i++)
+    {
+        var car = new WebImage("https://image.ibb.co/cdSJjS/redcar.png");
+        car.setSize(20,13);
+        car.rotate(180);
+        car.setPosition(Randomizer.nextInt(0,getWidth()), 80 + (i*22));
+        car.setColor(Color.white);
+        carsL.push(car);
+        add(car);
+    }
+
+    for (var i = 0; i < carsR.length; i++)
+    {
+        carsR.remove(0);
+    }
+    for (var i = 0; i < 5; i++)
+    {
+        var car = new WebImage("https://image.ibb.co/cdSJjS/redcar.png");
+        car.setSize(20,13);
+        car.setPosition(Randomizer.nextInt(0,getWidth()), 200 + (i*23));
+        car.setColor(Color.white);
+        carsR.push(car);
+        add(car);
+    }   
+    
+    //score
+    score1temp = 0;
+    score2temp = 0;
+    scoreText1.setText(score1temp);
+    scoreText1.setPosition(getWidth()/4, 30);
+    scoreText1.setColor(Color.red);
+    add(scoreText1);
+    scoreText2.setText(score2temp);
+    scoreText2.setPosition((getWidth()/4)*3, 30);
+    scoreText2.setColor(Color.blue);
+    add(scoreText2);
+    
+    //creates the characters
+    playerOne = new Circle(5);
+    playerOne.setPosition(getWidth()/4,getHeight()-125);
+    add(playerOne);
+    playerTwo = new Circle(5);
+    playerTwo.setPosition((getWidth()/4)*3,getHeight()-125);
+    add(playerTwo);
+    
+    //starts the game
+    setTimer(game, 41 - ((slider.getX()-355)/5));
+    timeRemaining = 60;
+    setTimer(timeLeft,1000);
+    GAMERUNNING = true;
+}
+
+//checks for contact AND OTHER CHARACTER EVENTS
+function checkContact(player)
+{
+    //checks for car collision
+    for (var i = 0; i < carsR.length; i++)
+    {
+        var current = carsR[i];
+        remove(player);
+        var hit = getElementAt(player.getX(), player.getY()-player.getHeight()/2);
+        var hit2 = getElementAt(player.getX(), player.getY()+player.getHeight()/2);
+        add(player);
+        if (hit == current || hit2 == current)
+        {
+            player.setPosition(player.getX(), getHeight()-125);
+        }
+    }
+    for (var i = 0; i < carsL.length; i++)
+    {
+        var current = carsL[i];
+        remove(player);
+        var hit = getElementAt(player.getX(), player.getY());
+        add(player);
+        if (hit == current)
+        {
+            player.setPosition(player.getX(), getHeight()-125);
+        }
+    }
+    
+    //checks if player is at the top
+    if (player.getY() <= 50)
+    {
+        player.setPosition(player.getX(),getHeight()-125);
+        if (player == playerOne)
+        {
+            score1temp += 1
+            remove(scoreText1);
+            scoreText1.setText(score1temp);
+            add(scoreText1);
+        }
+        if (player == playerTwo)
+        {
+            score2temp += 1
+            remove(scoreText2);
+            scoreText2.setText(score2temp);
+            add(scoreText2);
+        }
+        
+    }
+}
+
+function game()
+{
+    if (GAMERUNNING)
+    {
+        //move cars
+        for (var i = 0; i < carsR.length; i++)
+        {
+            var current = carsR[i];
+            if(current.getX() < getWidth())
+            {
+                current.move(5 + (5 - (1 * i)), 0);
+            }
+            else
+            {
+                current.setPosition(0, current.getY());
+            }
+        }
+        for (var i = 0; i < carsL.length; i++)
+        {
+            var current = carsL[i];
+            if(current.getX() > 0)
+            {
+                current.move(-5 - ((1 * i)), 0);
+            }
+            else
+            {
+                current.setPosition(getWidth(), current.getY());
+            }
+        }
+        
+        //move characters
+        playerOne.move(X1,Y1);
+        playerTwo.move(X2,Y2);
+        
+        //check hits
+        checkContact(playerOne);
+        checkContact(playerTwo);
+    }
+}
+
+function timeLeft()
+{
+    if (timeRemaining > 0)
+    {
+        timeRemaining -= 1;
+    }
+    else
+    {
+        stopTimer(timeLeft);
+        stopTimer(game);
+        GAMERUNNING = false;
+        removeAll();
+        mainMenu();
+        if(score1temp > score2temp)
+        {
+            oneScore += 1;
+        }
+        if (score1temp < score2temp)
+        {
+            twoScore += 1;
+        }
+        hud();
+    }
+}
+
+
+    if (typeof start === 'function') {
+        start();
+    }
+};
+</script>
+
+</body>
+</html>
