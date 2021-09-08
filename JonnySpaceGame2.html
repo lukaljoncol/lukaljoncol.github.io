@@ -264,7 +264,7 @@ function mouseDown(e){
    }
    
    if(mainScene.isActive()){
-       loadDoc("https://codehs.com/uploads/c7fe7269886d85819356fe955fb64cf6", myFunction1);
+       loadDoc("phpwrite2.php", myFunction1);
        
        if(easybutton(elem,mainScene,"mainMenu",0)){
            characterScene.clearScene();
@@ -1626,12 +1626,12 @@ function loadDoc(url, cFunction) {
     xhttp.open("POST","phpwrite2.php",true);
     xhttp.setRequestHeader("Content-type","text/plain");
     xhttp.send("Hello World");
-println("I ran");
+    println("I ran");
 }
 function myFunction1(xhttp) {
   // action goes here
   //println("I think I broke it")
-  //println(xhttp.responseText);
+  println(xhttp.responseText);
   
 }
 
