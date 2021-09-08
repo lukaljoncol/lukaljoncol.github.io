@@ -1,0 +1,3756 @@
+<html>
+<head>
+<title>Jons Space Game</title>
+	
+<a href="index.html"> go back </a>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+<script type="text/javascript" src="https://static.codehs.com/gulp/26d66975f8033d706c03933209c633cc0736d9ae/chs-js-lib/chs.js"></script>
+
+
+<style>
+canvas {
+    border: 1px solid black;
+    display: inline-block;
+    vertical-align: top;
+}
+
+</style>
+
+</head>
+
+<body>
+<h1>Game2</h1>
+
+
+
+<canvas
+width="400"
+height="500"
+class="codehs-editor-canvas"></canvas>
+
+<script>
+window.onload = function() {
+/*If you're reading this, welcome to the source code!
+If you can't collapse brackets then you're going to do a lot of scrolling
+*Most* things are commented, this is mostly for myself, as this is only getting more complicated
+Even though its extremely unlikely, I am trying to make this game user content friendly
+So anyone who wants to create a custom planet or custom Naut can do so relatively easily
+
+General list of featurest that are being/soon to be worked on
+-Tutorial level design
+-Nauts
+    -animations
+    -crawling, vaulting
+    -suit sounds
+    -arm and head
+    -probably rework how looking left and right works
+-heads up display in play mode
+-how the hell rockets will work
+    -seriously, I'm open to ideas
+    
+stuff that is done
+-Nauts
+    -redid walking
+    -reworked collision
+*/
+
+
+var CAMERA_WIDTH = 750;  //750
+var CAMERA_HEIGHT = 500; //500
+
+setSize(CAMERA_WIDTH,CAMERA_HEIGHT);
+var homescreen = new WebImage("https://codehs.com/uploads/f1cac77a93fa9b7477badfab23fac98b");
+var rocket;
+var planet;
+var control = false;
+var actClick = 0;
+var onFoot = true;
+var paused = false;
+
+var welcomeScene;
+var mainScene;
+var characterScene;
+var optionScene;
+var contractScene;
+var vabScene;
+var flexScene;
+var ascentScene;
+var playScene;
+var curScene;
+
+var SCENES;
+var CONTRACTS;
+var CONTRACTCONSTANT;
+var NAUTS;
+var NAUT;
+var curNaut;
+var CONES;
+var CAPSULES;
+var PAYLOADS;
+var FUELS;
+var ENGINES;
+var PLANETS;
+var CLOUDS;
+
+
+var fontstuff;
+var fontstuff2;
+var font;
+var fontconst;
+var fontsize;
+var fontsize2;
+var V_MUSIC = 0.1;
+
+var UNITS;
+var metric;
+var imperial;
+var FRAME_DELAY = 50;
+var MOUSE_ANGLE = 0;
+var KEYBOARD;
+var SOUND_LIB;
+//var SELECTED_MOUSE;
+
+function start(){
+    for(var i = 0; i<5; i++){
+        //This is needed for classes to work, idk why
+    }
+
+    
+    
+    //this makes fonts a variable that can be changed
+    font = "Roboto";
+    fontconst = 0;
+    fontsize = 26;
+    fontsize2 = 16;
+    fontstuff = String(fontsize)+"pt "+font;
+    fontstuff2 = String(fontsize2)+"pt "+font;
+    
+    //loading text, uses flex scene as global variable
+    flexScene = new Text("Loading...",fontstuff);
+    flexScene.setPosition(getWidth()/2-flexScene.getWidth()/2,getHeight()/2+flexScene.getHeight()/2);
+    add(flexScene);
+    
+    createKeyboard();
+    createSounds();
+    createUnits();
+    createClouds();
+    generateContracts();
+    createNauts();
+    createCones();
+    createCapsules();
+    createPayloads();
+    createFuels();
+    createEngines();
+    createRocket();
+    createPlanets();
+    CONTRACTCONSTANT = 0;
+    
+    //this delays loads so images will have values
+    setTimer(loadDelay,1000);
+}
+
+//this function makes everything once it hopefully has loaded
+function loadDelay(){
+    //flex scene here is actually the loading text
+    remove(flexScene);
+    SCENES = [];
+    
+    welcomeScene = new Scene;
+    createWelcomeScene();
+    welcomeScene.setActive();
+    welcomeScene.printScene();
+    
+    mainScene= new Scene;
+    SCENES.push(mainScene);
+    createMainScene();
+    
+    characterScene = new Scene;
+    SCENES.push(characterScene);
+    createCharacterScene();
+    
+    contractScene = new Scene;
+    SCENES.push(contractScene);
+    createContractScene();
+    
+    vabScene= new Scene;
+    SCENES.push(vabScene);
+    createVabScene();
+    
+    ascentScene = new Scene;
+    SCENES.push(ascentScene);
+    createAscentScene();
+    
+    playScene = new Scene;
+    SCENES.push(playScene);
+    createPlayScene();
+    
+    //not pushed becuase, its reloaded when its switched to
+    flexScene= new Scene;
+    createFlexScene("cone");
+    
+    optionScene = new Scene;
+    SCENES.push(optionScene);
+    createOptionScene();
+    
+    stopTimer(loadDelay);
+    
+    //Moved because people can't wait for the game to load
+    mouseDownMethod(mouseDown);
+    mouseUpMethod(mouseUp);
+    mouseMoveMethod(mouseMove);
+    keyDownMethod(keyDown);
+    keyUpMethod(keyUp);
+}
+//if you change an option or something
+function reloadScenes(){
+    for(var i=0; i<SCENES.length;i++){
+        var cur = SCENES[i];
+        cur.clearScene();
+    }
+    createMainScene();
+    createCharacterScene();
+    createOptionScene();
+    createContractScene();
+    createVabScene();
+    createAscentScene();
+    createPlayScene();
+}
+//extra scenes dont rely on Naut or contracts, only on font changes, at least for now
+function reloadExtraScenes(){
+    flexScene.clearScene();
+    createFlexScene("cone");
+    
+}
+
+//generic input functions
+function mouseUp(e){
+    //println("mouse up");
+    
+    //SELECTED_MOUSE = null;
+    
+    if(ascentScene.isActive()&&control){
+       rocket.setRotateConst(0);
+       if(actClick>1){
+           rocket.setThrustCur(0);
+       }
+   }
+    actClick--;
+   
+   
+}
+function mouseDown(e){
+
+   var elem = getElementAt(e.getX(),e.getY());
+   //SELECTED_MOUSE = elem;
+   //println(e.getX() + " " + e.getY());
+   //print(elem);
+   //println("mouse down");
+   actClick++;
+   
+    
+   if(welcomeScene.isActive()){
+       switchScene(welcomeScene,mainScene);
+       //SOUND_LIB.playSound("test");
+   }
+   
+   if(mainScene.isActive()){
+       loadDoc("https://lukaljoncol.github.io/", myFunction1);
+       
+       if(easybutton(elem,mainScene,"mainMenu",0)){
+           characterScene.clearScene();
+           createCharacterScene();
+           switchScene(mainScene,characterScene);
+       }
+       if(easybutton(elem,mainScene,"mainMenu",1)){
+           switchScene(mainScene,contractScene);
+       }
+       if(easybutton(elem,mainScene,"mainMenu",2)){
+           vabScene.clearScene();
+           createVabScene();
+           switchScene(mainScene,vabScene);
+           rocket.updateRocket();
+           rocket.printRocket();
+       }
+       if(easybutton(elem,mainScene,"optionMenu",0)){
+           switchScene(mainScene,optionScene);
+       }
+   }
+   
+   
+   if(optionScene.isActive()){
+       
+       //back button
+       if(easybutton(elem,optionScene,"backMenu",0)){
+           if(curNaut.getThemePlaying()){
+               curNaut.stopSound("theme");
+               curNaut.themePlaying = false;
+           }
+           switchScene(optionScene,mainScene);
+       }
+       
+       //fonts
+       if(easybutton(elem,optionScene,"fontMenu",0)){
+           font = "Roboto"
+           fontconst = 0;
+           reloadFont();
+       }
+       if(easybutton(elem,optionScene,"fontMenu",1)){
+           font = "Courier"
+           fontconst = 6;
+           reloadFont();
+       }
+       if(easybutton(elem,optionScene,"fontMenu",2)){
+           font = "Bookman"
+           fontconst = 0;
+           reloadFont();
+       }
+       if(easybutton(elem,optionScene,"fontMenu",3)){
+           font = "Comic Sans MS"
+           fontconst = 3;
+           reloadFont();
+       }
+       
+       //units
+       if(easybutton(elem,optionScene,"unitMenu",0)){
+           UNITS = metric;
+       }
+       if(easybutton(elem,optionScene,"unitMenu",1)){
+           UNITS = imperial;
+       }
+       
+       //Music
+       if(easybutton(elem,optionScene,"volumeMenu",0)){
+            V_MUSIC = 0.0;
+            curNaut.playSound("theme");
+            curNaut.themePlaying = true;
+       }
+       if(easybutton(elem,optionScene,"volumeMenu",1)){
+            V_MUSIC = 0.10;
+            curNaut.playSound("theme");
+            curNaut.themePlaying = true;
+       }
+       if(easybutton(elem,optionScene,"volumeMenu",2)){
+            V_MUSIC = 0.25;
+            curNaut.playSound("theme");
+            curNaut.themePlaying = true;
+       }
+       if(easybutton(elem,optionScene,"volumeMenu",3)){
+            V_MUSIC = 0.50;
+            curNaut.playSound("theme");
+            curNaut.themePlaying = true;
+       }
+       if(easybutton(elem,optionScene,"volumeMenu",4)){
+            V_MUSIC = 1.0;
+            curNaut.playSound("theme");
+            curNaut.themePlaying = true;
+       }
+   }
+   
+   if(characterScene.isActive()){
+       var change = false;
+       //These add the Charater Pictures and soon other stuff like bios
+       if(easybutton(elem,characterScene,"characterMenu",0)){
+           var nat = NAUTS[0];
+           if(NAUT!=0 && nat.isLiving()){
+               NAUT = 0;
+               change = true;
+           }
+       }
+       if(easybutton(elem,characterScene,"characterMenu",1)){
+           var nat = NAUTS[1];
+           if(NAUT!=1 && nat.isLiving()){
+               NAUT = 1;
+               change = true;
+           }
+       }
+       if(easybutton(elem,characterScene,"characterMenu",2)){
+           var nat = NAUTS[2];
+           if(NAUT!=2 && nat.isLiving()){
+               NAUT = 2;
+               change = true;
+           }
+       }
+       if(easybutton(elem,characterScene,"characterMenu",3)){
+           var nat = NAUTS[3];
+           if(NAUT!=3 && nat.isLiving()){
+               NAUT = 3;
+               change = true;
+           }
+       }
+       if(easybutton(elem,characterScene,"characterMenu",4)){
+           var nat = NAUTS[4];
+           if(NAUT!=4 && nat.isLiving()){
+               NAUT = 4;
+               change = true;
+           }
+       }
+       
+       if(change){
+           curNaut.stopSound("theme");
+           curNaut = NAUTS[NAUT];
+           curNaut.playSound("theme");
+           characterScene.removeScene();
+           characterScene.clearScene();
+           reloadScenes();
+           characterScene.printScene();
+       }
+       
+       
+       if(easybutton(elem,characterScene,"backMenu",0)){
+           switchScene(characterScene,mainScene);
+           curNaut.stopSound("theme");
+       }
+       
+   }
+   
+   if(contractScene.isActive()){
+       if(easybutton(elem,contractScene,"backMenu",0)){
+           switchScene(contractScene,mainScene);
+           createContractScene();
+       }
+       for(var i=0;i<4;i++){
+           if(easybutton(elem,contractScene,"contractMenu",i)){
+               CONTRACTCONSTANT = i+1;
+               contractScene.removeScene();
+               contractScene.clearScene();
+               reloadScenes();
+               contractScene.printScene();
+           }
+       }
+   }
+   if(vabScene.isActive()){
+       if(easybutton(elem,vabScene,"backMenu",0)){
+           switchScene(vabScene,mainScene);
+       }
+       if(elem == vabScene.getObject("nextNaut") || elem == vabScene.getText("nextNautT")){
+           if(NAUT == 0){
+               NAUT+=1;
+           }
+           NAUT+=1;
+           if(NAUT == 5){
+               NAUT = 0;
+           }
+           curNaut = NAUTS[NAUT];
+           vabScene.removeScene();
+           vabScene.clearScene();
+           reloadScenes();
+           vabScene.printScene();
+           rocket.updateRocket();
+           rocket.printRocket();
+       }
+       if(elem == vabScene.getObject("lastNaut") || elem == vabScene.getText("lastNautT")){
+           if(NAUT == 2){
+               NAUT-=1;
+           }
+           NAUT-=1;
+           if(NAUT == -1){
+               NAUT = 4;
+           }
+           curNaut = NAUTS[NAUT];
+           vabScene.removeScene();
+           vabScene.clearScene();
+           reloadScenes();
+           vabScene.printScene();
+           rocket.updateRocket();
+           rocket.printRocket();
+       }
+       if(easybutton(elem,vabScene,"partMenu",0)){
+           flexScene.clearScene();
+           createFlexScene("cone");
+           switchScene(vabScene,flexScene);
+           rocket.removeRocket();
+       }
+       if(easybutton(elem,vabScene,"partMenu",1)){
+           flexScene.clearScene();
+           createFlexScene("capsule");
+           switchScene(vabScene,flexScene);
+           rocket.removeRocket();
+       }
+       if(easybutton(elem,vabScene,"partMenu",2)){
+           flexScene.clearScene();
+           createFlexScene("payload");
+           rocket.removeRocket();
+           switchScene(vabScene,flexScene);
+       }
+       if(easybutton(elem,vabScene,"partMenu",3)){
+           flexScene.clearScene();
+           createFlexScene("fuel");
+           rocket.removeRocket();
+           switchScene(vabScene,flexScene);
+       }
+       if(easybutton(elem,vabScene,"partMenu",4)){
+           flexScene.clearScene();
+           createFlexScene("engine");
+           rocket.removeRocket();
+           switchScene(vabScene,flexScene);
+       }
+       if(easybutton(elem,vabScene,"launchMenu",0)){
+           /*
+           switchScene(vabScene,ascentScene)
+           CLOUDS.printClouds();
+           rocket.printRocket();
+           setTimer(gameUpdate,20);
+           ascentScene.removeMenu("endMenu");
+           ascentScene.removeText("vtext");
+           */
+          
+          ///* 
+           //new play scene
+           rocket.removeRocket();
+           switchScene(vabScene,playScene);
+           playScene.removeMenu("escapeMenu");
+           setTimer(gameUpdate2,FRAME_DELAY);
+           if(curNaut.getThemePlaying()){
+                curNaut.playSound("theme");
+            }
+           //*/
+       }
+   }
+   
+   if(flexScene.isActive()){
+       if(easybutton(elem,flexScene,"backMenu",0)){
+           switchScene(flexScene,vabScene);
+           rocket.updateRocket();
+           rocket.printRocket();
+       }
+   }
+   if(ascentScene.isActive()&&control){
+       if(e.getX() < getWidth()/3){
+           rocket.setRotateConst(-1*rocket.getRotateSpeed());
+       }
+       if(e.getX()>getWidth()*2/3){
+           rocket.setRotateConst(rocket.getRotateSpeed());
+       }
+       if(actClick > 1){
+           rocket.setRotateConst(0);
+           rocket.setThrustCur(1);
+       }
+   }
+   if(ascentScene.isActive()&& !control){
+       
+       if(easybutton(elem,ascentScene,"lunchMenu",0)){
+           control = true;
+           ascentScene.removeMenu("lunchMenu");
+       }
+       if(easybutton(elem,ascentScene,"endMenu",0)){
+           switchScene(ascentScene,mainScene);
+           rocket.resetValues();
+           rocket.updateRocket();
+           rocket.removeRocket();
+       }
+   }
+   
+   if(playScene.isActive() && paused){
+       if(easybutton(elem,playScene,"escapeMenu",0)){
+           paused = false;
+           playScene.removeMenu("escapeMenu");
+           setTimer(gameUpdate2,FRAME_DELAY);
+           return;
+       }
+       if(easybutton(elem,playScene,"escapeMenu",1)){
+           paused = false;
+           switchScene(playScene,vabScene);
+       }
+   }
+   
+}
+function mouseMove(e){
+    if(playScene.isActive() && !paused){
+        
+        if(e.getX() != W(2)){
+            MOUSE_ANGLE =  Math.atan((H(2)-e.getY())/(W(2)-e.getX()))*180/Math.PI;
+            if((e.getX()-W(2))>0){
+                if(curNaut.getDirection()=="left"){
+                    curNaut.setDirection("right");
+                    curNaut.flip();
+                    checkShadowMask();
+                }
+            } else {
+                if(curNaut.getDirection()=="right"){
+                    curNaut.setDirection("left");
+                    curNaut.flip();
+                    checkShadowMask();
+                }
+            }
+        }
+    }
+}
+function keyDown(e){
+    
+    //set key active in persistant keyboard
+    if(KEYBOARD.isActive(e.keyCode)){          
+        return;//prevents spamming of key when its held down
+    } else {
+        KEYBOARD.setActive(e.keyCode,true); //set it active
+    }
+    
+    if(ascentScene.isActive()&&control){
+        if(e.keyCode == Keyboard.LEFT){
+            rocket.setRotateConst(-1*rocket.getRotateSpeed());
+        }
+        if(e.keyCode == Keyboard.RIGHT){
+            rocket.setRotateConst(rocket.getRotateSpeed());
+        }
+        if(e.keyCode == Keyboard.letter('z')){
+            rocket.setThrustCur(1);
+        }
+        if(e.keyCode == Keyboard.letter('x')){
+            rocket.setThrustCur(0);
+        }
+        if(e.keyCode == Keyboard.SHIFT){
+            if(rocket.getThrustCur()/rocket.getThrustMax()<1){
+                rocket.setThrustCur(rocket.getThrustCur()/rocket.getThrustMax()+.1);
+            }
+        }
+        if(e.keyCode == Keyboard.CTRL){
+            if(rocket.getThrustCur()/rocket.getThrustMax()>0){
+                rocket.setThrustCur(rocket.getThrustCur()/rocket.getThrustMax()-.1);
+            }
+        }
+    }
+    if(ascentScene.isActive() && !control){
+        if(e.keyCode == Keyboard.SPACE && Math.floor(rocket.getAltitude()*3600/1000)== 0){
+            control = true;
+            ascentScene.removeMenu("lunchMenu");
+        }
+    }
+    
+    if(playScene.isActive()){
+        //27 is the escape key for escape menu
+        if(e.keyCode == 27 && !paused){
+            paused = true;
+            playScene.printMenu("escapeMenu");
+            stopTimer(gameUpdate2);
+            if(curNaut.getThemePlaying()){
+                curNaut.pauseSound("theme");
+            }
+            return;
+        }
+        if(e.keyCode == 27 && paused){
+            paused = false;
+            playScene.removeMenu("escapeMenu");
+            setTimer(gameUpdate2,FRAME_DELAY);
+            if(curNaut.getThemePlaying()){
+                curNaut.playSound("theme");
+            }
+            return;
+        }
+        //77 is the m key
+        if(e.keyCode == 77 && !paused){
+            
+            //check if theme is already playing
+            if(curNaut.getThemePlaying()){
+                //if it is, pause it
+                curNaut.pauseSound("theme");
+                curNaut.themePlaying = false;
+            } else {
+                //if not, play it
+                curNaut.playSound("theme");
+                curNaut.themePlaying = true;
+            }
+            return;
+            
+        }
+        //press one
+        if(e.keyCode == 49 && !paused){
+            curNaut.setGun(1);
+        }
+        //press two
+        if(e.keyCode == 50 && !paused){
+            curNaut.setGun(2);
+        }
+        //press L
+        if(e.keyCode == 76 && !paused){
+            if(curScene.getLit()){
+                curScene.setLit(false);
+                println("dark");
+            } else {
+                curScene.setLit(true);
+                curScene.removeSpecial("shadowMask");
+                println("bright");
+            }
+        }
+    }
+}
+function keyUp(e){
+    
+    //deactivate the key on persistant keyboard
+    KEYBOARD.setActive(e.keyCode,false);
+    
+    if(ascentScene.isActive()&&control){
+        if(e.keyCode == Keyboard.LEFT){
+            rocket.setRotateConst(0);
+        }
+        if(e.keyCode == Keyboard.RIGHT){
+            rocket.setRotateConst(0);
+        }
+        if(e.keyCode == Keyboard.SPACE){
+            //you'll need this later :)
+        }
+    }
+    if(playScene.isActive()){
+        //walking
+        if(!paused && onFoot){
+            if(e.keyCode == Keyboard.letter('D')){
+                curNaut.setVelocity(0);
+                curNaut.setState("idle");
+            }
+            if(e.keyCode == Keyboard.letter('A')){
+                curNaut.setVelocity(0)
+                curNaut.setState("idle");
+            }
+        }
+    }
+}
+
+//make keyboard
+function createKeyboard(){
+    //0 = 48  --> 9 = 57
+    //a = 65  --> z = 90
+    //space = 32
+    //escape = 27
+    //shift = 16
+    //ctrl = 17
+    //alt = 18
+    //f4 = 115
+    
+    //add numbers
+    KEYBOARD = new PersistantKeyboard();
+    for (var i = 48; i < 58; i++){
+        KEYBOARD.addKey(i);
+    }
+    
+    //add letters
+    for (var i = 65; i < 90; i++){
+        KEYBOARD.addKey(i);
+    }
+    
+    //add specifics
+    KEYBOARD.addKey(32); //space
+    KEYBOARD.addKey(27); //escape
+    KEYBOARD.addKey(16); //shift
+    KEYBOARD.addKey(17); //ctrl
+    KEYBOARD.addKey(18); //alt
+    KEYBOARD.addKey(115); //f4
+    
+}
+//make voice lines?
+function createSounds(){
+    //I mean, the sounds are already made, they just need put into memory and what not
+    //link to site http://texttospeechrobot.com/
+    //uk english, default speed, .6 pitch
+    //voice 16 english
+    SOUND_LIB = new SoundLibrary();
+    SOUND_LIB.addSound("test","https://codehs.com/uploads/cdd21e17ae846f5430e9e2218c296636");
+}
+//functions to make scenes
+function createWelcomeScene(){
+    
+    var background = homescreen;
+    welcomeScene.addObject("background", background);
+    
+    var rand = Randomizer.nextInt(1,3);
+    switch (rand){
+        case 1:
+            var menuText2 = new Text("Overhaul in progress!",fontstuff);
+            break;
+        case 2:
+            var menuText2 = new Text("3500 lines and still no game!",fontstuff);
+            break;
+        default:
+            var menuText2 = new Text("Now has Audio!",fontstuff);
+            break;
+    }
+    menuText2.setPosition(50,400);
+    welcomeScene.addText("menuText2",menuText2);
+     
+}
+function createMainScene(){
+    
+    var background = new Rectangle(getWidth(),getHeight());
+    background.setColor(Color.grey);
+    mainScene.addObject("background",background);
+    
+    var mainMenu = new Menu(W(1),H(5));
+    mainMenu.setPosition(0,H(5)*4);
+    
+    var b1 = new Button();
+    b1.addCover(1,T("Nauts",0));
+    var b2 = new Button();
+    b2.addCover(1,T("Contracts",0));
+    var b3 = new Button();
+    b3.addCover(1,T("Rocket",0));
+    
+    mainMenu.addButton(b1);
+    mainMenu.addButton(b2);
+    mainMenu.addButton(b3);
+    mainScene.addMenu("mainMenu",mainMenu);
+    
+    var optionMenu = new Menu(W(6),H(8));
+    optionMenu.setPosition(W(6)*5,0);
+    optionMenu.setBuffer(10);
+    
+    var b1 = new Button()
+    b1.addCover(1,T("Options",1));
+    
+    optionMenu.addButton(b1);
+    mainScene.addMenu("optionMenu",optionMenu);
+
+    var Naut = NAUTS[NAUT];
+    var curNaut = new Text("Naut: "+Naut.getName(),fontstuff);
+    curNaut.setPosition(20,curNaut.getHeight()+20);
+    mainScene.addText("curNaut",curNaut);
+    
+    var cont = CONTRACTS[CONTRACTCONSTANT];
+    var curCont = new Text("Contract: "+cont.getShort(),fontstuff);
+    curCont.setPosition(curNaut.getX(),curNaut.getY()+curCont.getHeight()+20);
+    mainScene.addText("curCont",curCont);
+}
+function createCharacterScene(){
+    //adds charater stuff to the scene
+    var Naut = NAUTS[NAUT];
+    var pic = Naut.getBigPic();
+    pic.setPosition(getWidth()-400,0);
+    characterScene.addObject("pic",pic);
+    
+    var Name = new Text(Naut.getName(),fontstuff);
+    Name.setPosition(20,getHeight()/5+Name.getHeight()+20);
+    characterScene.addText("Name",Name);
+    
+    for (var i=0; i<Naut.getBioLength();i++){
+        var cur = new Text(Naut.getBio(i),fontstuff2);
+        cur.setPosition(30,Name.getY()+30+(20*i));
+        characterScene.addText("cur"+String(i),cur);
+    }
+    
+    //adds the character menu to the scene
+    var characterMenu = new Menu(5,0,getHeight()-getHeight()/5,getWidth(),getHeight()/5);
+    var characterMenu = new Menu(W(1),H(5));
+    characterMenu.setPosition(0,H(5)*4);
+    var b1 = new Button();
+    b1.addCover(1,T("Alex",0));
+    var b2 = new Button();
+    b2.addCover(1,T("Colin",0));
+    var b3 = new Button();
+    b3.addCover(1,T("Jonny",0));
+    var b4 = new Button();
+    b4.addCover(1,T("Lukas",0));
+    var b5 = new Button();
+    b5.addCover(1,T("Nick",0));
+    characterMenu.addButtons([b1,b2,b3,b4,b5]);
+    characterScene.addMenu("characterMenu",characterMenu);
+    
+    //adds the return menu button to the scene
+    var backMenu = new Menu(140,100);
+    b1 = new Button();
+    b1.addCover(1,T("Back",0));
+    backMenu.addButton(b1);
+    characterScene.addMenu("backMenu",backMenu);
+}
+function createOptionScene(){
+    var background = new Rectangle(getWidth(),getHeight());
+    background.setColor(Color.grey);
+    optionScene.addObject("background",background);
+    
+    var backMenu = new Menu(W(9),H(9));
+    backMenu.setBuffer(10);
+    var b1 = new Button();
+    b1.addCover(1,T("Back",1));
+    backMenu.addButton(b1);
+    optionScene.addMenu("backMenu",backMenu);
+    
+    var fontMenu = new Menu(W(1),H(5));
+    fontMenu.setPosition(0,H(5)*4);
+    var b1text = new Text("Roboto",fontsize+"pt Roboto");
+    var b1 = new Button();
+    b1.addCover(1,b1text);
+    var b2text = new Text("Courier",(fontsize-6)+"pt Courier");
+    var b2 = new Button();
+    b2.addCover(1,b2text)
+    var b3text = new Text("Bookman",fontsize+"pt Bookman");
+    var b3 = new Button();
+    b3.addCover(1,b3text);
+    var b4text = new Text("Comic",(fontsize-3)+"pt Comic Sans MS");
+    var b4 = new Button();
+    b4.addCover(1,b4text);
+    fontMenu.addButton(b1);
+    fontMenu.addButton(b2);
+    fontMenu.addButton(b3);
+    fontMenu.addButton(b4);
+    optionScene.addMenu("fontMenu",fontMenu);
+    
+    var unitMenu = new Menu(W(1),H(5));
+    unitMenu.setPosition(0,H(5)*2.5);
+    var b1 = new Button();
+    b1.addCover(1,T("Metric",0));
+    var b2 = new Button();
+    b2.addCover(1,T("Imperial/Freedom",0));
+    unitMenu.addButton(b1);
+    unitMenu.addButton(b2);
+    optionScene.addMenu("unitMenu",unitMenu);
+    
+    var volumeMenu = new Menu(W(1),H(5));
+    volumeMenu.setPosition(0,H(5)*1);
+    var b1 = new Button();
+    b1.addCover(1,T("0",0));
+    var b2 = new Button();
+    b2.addCover(1,T("10",0));
+    var b3 = new Button();
+    b3.addCover(1,T("25",0));
+    var b4 = new Button();
+    b4.addCover(1,T("50",0));
+    var b5 = new Button();
+    b5.addCover(1,T("100",0));
+    volumeMenu.addButton(b1);
+    volumeMenu.addButton(b2);
+    volumeMenu.addButton(b3);
+    volumeMenu.addButton(b4);
+    volumeMenu.addButton(b5);
+    optionScene.addMenu("volumeMenu",volumeMenu);
+    
+    var fontsText = new Text("Fonts",fontstuff);
+    fontsText.setPosition(0,getHeight()*4/5-10);
+    optionScene.addText("fontsText",fontsText);
+    
+    var unitsText = new Text("Units",fontstuff);
+    unitsText.setPosition(0,H(2.5)+45);
+    optionScene.addText("unitsText",unitsText);
+    
+    var volumeText = new Text("Volume",fontstuff);
+    volumeText.setPosition(0,H(5)-5);
+    optionScene.addText("volumeText",volumeText);
+}
+function createContractScene(){
+    var background = new Rectangle(getWidth(),getHeight());
+    background.setColor(Color.black);
+    contractScene.addObject("background",background);
+    
+    var background2 = new Rectangle(getWidth()*4/5,getHeight()*4/5);
+    background2.setColor(Color.grey);
+    background2.setPosition(getWidth()/5,0);
+    contractScene.addObject("background2",background2);
+    
+    var backMenu = new Menu(140,100);
+    var b1 = new Button();
+    b1.addCover(1,T("Back",0));
+    backMenu.addButton(b1);
+    contractScene.addMenu("backMenu",backMenu);
+    
+    var cur = CONTRACTS[CONTRACTCONSTANT];
+    var comp = new Text(cur.getCompany(),fontstuff);
+    comp.setPosition(getWidth()/4,50);
+    contractScene.addText("comp",comp);
+    var obj = new Text(cur.getObjective(),fontstuff);
+    obj.setPosition(comp.getX(),comp.getY()+obj.getHeight()+20);
+    contractScene.addText("obj",obj);
+    for(var i=0;i<cur.getBodyLength();i++){
+        var bod = new Text(cur.getBody(i),fontstuff2);
+        bod.setPosition(obj.getX(),obj.getY()+(bod.getHeight()+fontconst)*(i+1)+20);
+        contractScene.addText("bod"+String(i),bod);
+    }
+    
+    var contractMenu = new Menu(W(1),H(5));
+    contractMenu.setPosition(0,H(5)*4);
+    var b1 = new Button();
+    b1.addCover(1,T("SPACE O",0));
+    var b2 = new Button();
+    b2.addCover(1,T("WASA",0));
+    var b3 = new Button();
+    b3.addCover(1,T("BPBR",0));
+    var b4 = new Button();
+    b4.addCover(1,T("C TECH",0));
+    contractMenu.addButtons([b1,b2,b3,b4]);
+    contractScene.addMenu("contractMenu",contractMenu);
+}
+function createVabScene(){
+    var NAUT2 = NAUTS[NAUT];
+    
+    var backMenu = new Menu(W(5),H(5));
+    backMenu.setPosition(W(5)*4,H(5)*4);
+    var b1 = new Button();
+    b1.addCover(1,T("back",0));
+    backMenu.addButton(b1);
+    vabScene.addMenu("backMenu",backMenu);
+    
+    var partMenu = new Menu(W(5),H(1));
+    var b1 = new Button();
+    b1.addCover(1,T("Cone",1));
+    var b2 = new Button();
+    b2.addCover(1,T("Capsule",1));
+    var b3 = new Button();
+    b3.addCover(1,T("Payload",1));
+    var b4 = new Button();
+    b4.addCover(1,T("Fuel",1));
+    var b5 = new Button();
+    b5.addCover(1,T("Engine",1));
+    partMenu.addButtons([b1,b2,b3,b4,b5]);
+    vabScene.addMenu("partMenu",partMenu);
+    
+    var curCont = CONTRACTS[CONTRACTCONSTANT];
+    var cont = new Text(curCont.getShort(),fontstuff2);
+    cont.setPosition((getWidth()*4/5+10)+(getWidth()/10-5)-cont.getWidth()/2,getHeight()*4/5-10);
+    vabScene.addText("cont",cont);
+    
+    var naut = new Text(NAUT2.getName(),fontstuff2);
+    naut.setPosition((getWidth()*4/5+10)+(getWidth()/10-5)-naut.getWidth()/2,361-(26-naut.getHeight())/2);
+    vabScene.addText("naut",naut);
+    
+    var pic = NAUT2.getSmallPic();
+    pic.setPosition(getWidth()*4/5,getHeight()*2/6+20);
+    vabScene.addObject("pic",pic);
+     
+    var b1 = new Rectangle(getWidth()/5,getHeight()/6);
+    b1.setPosition(getWidth()*4/5,getHeight()*4/6);
+    b1.setColor(Color.grey);
+    vabScene.addObject("b1",b1);
+    
+    var b2 = new Rectangle(10,getHeight());
+    b2.setPosition(b1.getX(),0);
+    vabScene.addObject("b2",b2);
+    
+    var b3 = new Rectangle(b1.getWidth(),5);
+    b3.setPosition(b1.getX(),b1.getY())
+    vabScene.addObject("b3",b3);
+    
+    var background = new Rectangle(getWidth()*3/5,getHeight());
+    background.setPosition(getWidth()/5,0);
+    background.setColor(Color.grey);
+    vabScene.addObject("background",background);
+    
+    var b4 = new Rectangle(b3.getWidth(),b3.getHeight());
+    b4.setPosition(getWidth()*4/5,pic.getY());
+    vabScene.addObject("b4",b4);
+    
+    var b5 = new Rectangle(b3.getWidth(),b3.getHeight());
+    b5.setPosition(getWidth()*4/5,361);
+    vabScene.addObject("b5",b5);
+    
+    var nextNautb = new Rectangle(23,23);
+    nextNautb.setPosition(getWidth()-nextNautb.getWidth(),338);
+    vabScene.addObject("nextNautb",nextNautb);
+    
+    var nextNaut = new Rectangle(nextNautb.getHeight()-4,nextNautb.getHeight()-4);
+    nextNaut.setPosition(nextNautb.getX()+2,nextNautb.getY()+2);
+    nextNaut.setColor(Color.grey);
+    vabScene.addObject("nextNaut",nextNaut);
+    
+    var lastNautb = new Rectangle(23,23);
+    lastNautb.setPosition(getWidth()*4/5+b2.getWidth(),338);
+    vabScene.addObject("lastNautb",lastNautb);
+    
+    var lastNaut = new Rectangle(lastNautb.getHeight()-4,lastNautb.getHeight()-4);
+    lastNaut.setPosition(lastNautb.getX()+2,lastNautb.getY()+2);
+    lastNaut.setColor(Color.grey);
+    vabScene.addObject("lastNaut",lastNaut);
+    
+    var nextNautT = new Text("+",fontstuff2);
+    nextNautT.setPosition(nextNaut.getX()+(nextNaut.getWidth()-nextNautT.getWidth())/2,nextNaut.getY()+nextNaut.getHeight()-(23-nextNautT.getHeight())/2);
+    vabScene.addText("nextNautT",nextNautT);
+    
+    var lastNautT = new Text("-",fontstuff2);
+    lastNautT.setPosition(lastNaut.getX()+(lastNaut.getWidth()-lastNautT.getWidth())/2,lastNaut.getY()+lastNaut.getHeight()-(23-lastNautT.getHeight())/2);
+    vabScene.addText("lastNautT",lastNautT);
+    
+    var launchMenu = new Menu(W(3),H(5));
+    launchMenu.setPosition(W(3),H(5)*4);
+    var b1 = new Button();
+    b1.addCover(1,T("LAUNCH",0));
+    launchMenu.addButton(b1);
+    vabScene.addMenu("launchMenu",launchMenu);
+}
+function createFlexScene(version){
+    
+    var backMenu = new Menu(1,0,0,140,100);
+    var backMenu = new Menu(140,100);
+    var b1 = new Button();
+    b1.addCover(1,T("Back",0));
+    backMenu.addButton(b1);
+    flexScene.addMenu("backMenu",backMenu);
+    
+    var arr = [];
+    switch (version){
+        case "cone":
+            arr = CONES;
+            break;
+        case "capsule":
+            arr = CAPSULES;
+            break;
+        case "payload":
+            arr = PAYLOADS;
+            break;
+        case "fuel":
+            arr = FUELS;
+            break;
+        case "engine":
+            arr = ENGINES;
+            break;
+        default:
+            arr = NAUTS;
+            break;
+    }
+    var len = arr.length;
+    var mainMenu = new Menu(W(1),H(5));
+    mainMenu.setPosition(0,H(5)*4);
+    
+    flexScene.addMenu("mainMenu",mainMenu);
+}
+function createAscentScene(){
+    
+    
+    rocket.setPosition(getWidth()/2,getHeight()/2);
+    var background = new Rectangle(getWidth(),getHeight());
+    var mycolor = new Color(102,226,242);
+    background.setColor(mycolor);
+    ascentScene.addObject("background",background);
+    
+    var ground = new Rectangle(getWidth(),getHeight()/2-rocket.getHeight());
+    ground.setPosition(0,getHeight()/2+rocket.getHeight());
+    ground.setColor(Color.green);
+    ascentScene.addObject("ground",ground);
+    
+    var dashboard = new Rectangle(getWidth(),getHeight()/5);
+    dashboard.setPosition(0,getHeight()*4/5);
+    dashboard.setColor(Color.grey);
+    ascentScene.addObject("dashboard",dashboard);
+    var dashline = new Rectangle(getWidth(),5);
+    dashline.setPosition(dashboard.getX(),dashboard.getY());
+    ascentScene.addObject("dashline",dashline);
+    
+    var altitude = new Text("Altitude: ",fontstuff2);
+    altitude.setPosition(20,getHeight()*4/5+25);
+    ascentScene.addText("altitude",altitude);
+    var velocityX = new Text("Velocity(X): ",fontstuff2);
+    velocityX.setPosition(20,altitude.getY()+velocityX.getHeight()+20);
+    ascentScene.addText("velocityX",velocityX);
+    var velocityY = new Text("Velocity(Y): ",fontstuff2);
+    velocityY.setPosition(W(4),altitude.getY());
+    ascentScene.addText("velocityY",velocityY);
+    
+    var lunchMenu = new Menu(W(3),H(5));
+    lunchMenu.setPosition(W(3),H(5)*4);
+    var b1 = new Button();
+    b1.addCover(1,T("Launch!",0));
+    lunchMenu.addButton(b1);
+    ascentScene.addMenu("lunchMenu",lunchMenu);
+    
+    var vtext = new Text("You've made it to Orbit!",fontstuff);
+    vtext.setPosition(getWidth()/2-vtext.getWidth()/2,getHeight()*2/5);
+    vtext.setColor(Color.white);
+    ascentScene.addText("vtext",vtext);
+    var endMenu = new Menu(W(2),H(5));
+    endMenu.setPosition(W(4),H(5)*3);
+    var b1 = new Button();
+    b1.addCover(1,T("Return to Menu",0));
+    endMenu.addButton(b1);
+    ascentScene.addMenu("endMenu",endMenu);
+    
+    
+    var targetY = new Text("Target Altitude: "+Math.round(planet.getTargetAltitude()*UNITS[1]/1000)+" "+UNITS[4],fontstuff2);
+    targetY.setPosition(getWidth()-targetY.getWidth() -20,getHeight()*4/5+25);
+    ascentScene.addText("targetY",targetY);
+    var targetVx = new Text("Target velocity(x): "+Math.round(planet.getTargetVx()*UNITS[2]) +" "+UNITS[5],fontstuff2);
+    targetVx.setPosition(getWidth()-targetVx.getWidth() -20,targetY.getY()+targetVx.getHeight()+20);
+    ascentScene.addText("targetVx",targetVx);
+    
+}
+function createPlayScene(){
+    
+    var steel = new Color(133, 132, 129);
+    var steel2 = new Color(180,180,180);
+    
+    //background and non chagning objects
+    var background = new Rectangle(getWidth(),getHeight());
+    background.setType("NC");
+    var mycolor = planet.getColorSky();
+    background.setColor(mycolor);
+    playScene.addObject("background",background);
+    
+    
+    //actual scene objects
+    var ground = new Rectangle(750,H(3));
+    ground.setColor(planet.getColorGround());
+    ground.setPosition(0,H(1)-H(5));
+    ground.setType("C");
+    playScene.addSceneObject("ground",ground);
+    
+    var leftWall = new Rectangle(20,H(1)+ground.getHeight());
+    leftWall.setColor(steel);
+    leftWall.setType("C");
+    leftWall.setPosition(ground.getX()-leftWall.getWidth(),ground.getY()+ground.getHeight()-leftWall.getHeight());
+    playScene.addSceneObject("leftWall",leftWall);
+    
+    var g2 = new Rectangle(500,H(3));
+    g2.setColor(steel);
+    g2.setType("C");
+    g2.setPosition(ground.getX()+ground.getWidth(),ground.getY());
+    playScene.addSceneObject("g2",g2);
+    
+    var bw = new Rectangle(g2.getWidth(),250);
+    bw.setColor(steel2);
+    bw.setType("NC");
+    bw.setPosition(g2.getX(),g2.getY()-bw.getHeight());
+    playScene.addSceneObject("bw",bw);
+    
+    //shadow mask
+    var shadowMask = new WebImage("https://codehs.com/uploads/2efb630a6ba8511bd6d2f2fc2c14cd03");
+    shadowMask.setType("shadowMask");
+    playScene.addSpecial("shadowMask",shadowMask);
+    
+    //escape menu
+    var escapeMenu = new Menu(W(3),H(2));
+    var b1 = new Button();
+    b1.addCover(1,T("Continue"),1);
+    var b2 = new Button();
+    b2.addCover(1,T("Abort"),1);
+    escapeMenu.addButtons([b1,b2]);
+    escapeMenu.setPosition(W(2)-W2(escapeMenu,2),H(2)-H2(escapeMenu,2))
+    playScene.addMenu("escapeMenu",escapeMenu);
+    
+}
+
+function createUnits(){
+    metric = [1,1,1,"m","km","m/s"];
+    imperial = [1/1609.34,1/1.609,2.23694,"Miles","Miles","mph"];
+    // meters, km,    m/s
+    // miles,  miles, mph
+    UNITS = metric;
+}
+function createClouds(){
+    CLOUDS = new Clouds();
+    for(var i=0;i<7;i++){
+        
+        var cloud = new Cloud();
+        CLOUDS.addCloud(cloud);
+    }
+}
+function generateContracts(){
+    CONTRACTS = [];
+    var c0 = new contract();
+    c0.setCompany("");
+    c0.addBody("");
+    c0.addBody("");
+    c0.addBody("");
+    c0.addBody("");
+    c0.addBody("");
+    c0.setGoals("");
+    c0.setObjective("");
+    c0.setCost(100);
+    CONTRACTS.push(c0);
+    
+    //generic contracts
+    var c1 = new contract();
+    c1.setCompany("SPACE O");
+    c1.addBody("SPACE O is looking for someone who can prove they can");
+    c1.addBody("achive orbit. Completing this will increase our business");
+    c1.addBody("standing and other coporate stuff. In the end they'll");
+    c1.addBody("pay us to go to space more, which is all we want.");
+    c1.addBody("");
+    c1.setGoals("Achieve Orbit");
+    c1.setObjective("Acheive Orbit");
+    c1.setCost(100);
+    c1.setShort("SPACE O");
+    CONTRACTS.push(c1);
+    
+    //little money, long time
+    var c2 = new contract();
+    c2.setCompany("World Air and Space Administration");
+    c2.addBody("The WASA has their sights set on interplanetary");
+    c2.addBody("colonization. Of course, they aren't going to do it");
+    c2.addBody("themselves, so they are willing to pay us to do it.");
+    c2.addBody("They probably get their names written in history books,");
+    c2.addBody("but we can write our names in the sand on Mars.");
+    c2.setGoals("Go to Mars");
+    c2.setObjective("Go to Mars");
+    c2.setCost(100);
+    c2.setShort("WASA");
+    CONTRACTS.push(c2);
+    
+    //big money, little time
+    var c3 = new contract();
+    c3.setCompany("Big Pockets, Big Rockets");
+    c3.addBody("BPBR has a lot of money, but not much intelligence.");
+    c3.addBody("They don't care how much money we spend as long");
+    c3.addBody("as we get the job done and get it done fast. Its a ");
+    c3.addBody("gamble, but if we can get it done then we will get");
+    c3.addBody("some bonus cash for other projects, or snacks.");
+    c3.setGoals("Get to the Moon");
+    c3.setObjective("Get to the Moon");
+    c3.setCost(100);
+    c3.setShort("BPBR");
+    CONTRACTS.push(c3);
+    
+    //little money, technology focused
+    var c4 = new contract();
+    c4.setCompany("Clarke Technologies");
+    c4.addBody("These guys are interested in space travel but are");
+    c4.addBody("busy programming some super computer they call HAL.");
+    c4.addBody("They want us to launch the rockets, but they are");
+    c4.addBody("offering to let us test their cutting edge tech.");
+    c4.addBody("");
+    c4.setGoals("Achieve orbit");
+    c4.setObjective("Acheive Orbit");
+    c4.setCost(100);
+    c4.setShort("C TECH");
+    CONTRACTS.push(c4);
+}
+function createNauts(){
+    NAUTS = [];
+    var Jonny = new Naut();
+    Jonny.setName("Jonny");
+    Jonny.setPic("https://codehs.com/uploads/3967c377930a193b575cc49368aa15de");
+    //Jonny.addBio("Jonny is good at everything but");
+    //Jonny.addBio("great at nothing, making him a");
+    //Jonny.addBio("reliable choice for any situation.");
+    //Jonny.addBio("He is often thought to be an");
+    //Jonny.addBio("alien by the other Nauts.");
+    Jonny.addBio("Jonny is the one creating this");
+    Jonny.addBio("game. It is slowly driving him");
+    Jonny.addBio("insane. Tell him you saw the");
+    Jonny.addBio("last update, he'll like that.");
+    var color = new Color(255,0,0);
+    Jonny.setColor(color);
+    Jonny.addSound("theme","https://codehs.com/uploads/32539c95cddb48cc9a244840cdb22e30");
+    
+    var Lukas = new Naut();
+    Lukas.setName("Lukas");
+    Lukas.setPic("https://codehs.com/uploads/e0651209133b2f2483156d618db8036b");
+    Lukas.addBio("Lukas is a fearless pilot and isn't");
+    Lukas.addBio("frigthened by near death");
+    Lukas.addBio("experiences. He is very good at");
+    Lukas.addBio("controlling rockets and can often");
+    Lukas.addBio("manage to squeeze some extra");
+    Lukas.addBio("deltaV out of his missions.");
+    Lukas.setColor(new Color(240,255,48));
+    Lukas.addSound("theme","https://codehs.com/uploads/4b986747560787c8dc1fe2ceb08a751a");
+    
+    var Colin = new Naut();
+    Colin.setName("Colin");
+    Colin.setPic("https://codehs.com/uploads/8061277b372578e23ed0bf8d29328c01");
+    Colin.addBio("Colin didn't submit a bio.");
+    Colin.setControl(-5);
+    Colin.setColor(new Color(102,196,210));
+    Colin.addSound("theme","https://codehs.com/uploads/2af4a3e6fd4a110eee862962c1f14d1c");
+    
+    var Alex = new Naut();
+    Alex.setName("Alex");
+    Alex.setPic("https://codehs.com/uploads/709d1c3e5ee9fdebaaa2077ed99b662e");
+    Alex.addBio("Out of the group, Alex is the best");
+    Alex.addBio("when it comes to taking pictures or");
+    Alex.addBio("videos, making him great for");
+    Alex.addBio("contracts that have a focus on");
+    Alex.addBio("digital media. He's not the best");
+    Alex.addBio("pilot, but he can get the job done.");
+    Alex.setControl(2);
+    color = new Color(189,100,196);
+    Alex.setColor(color);
+    Alex.addSound("theme","https://codehs.com/uploads/a9b18fd0426aaf29a27ee5ae8c78c0f3");
+    
+    var Nick = new Naut();
+    Nick.setName("Nick");
+    Nick.setPic("https://codehs.com/uploads/0daa1cac071cef3f777455106e510d38");
+    Nick.addBio("Nick likes boats. The whole");
+    Nick.addBio("reason he joined the team is");
+    Nick.addBio("to one day fufill his dream of");
+    Nick.addBio("having a boat on Mars. He has");
+    Nick.addBio("plenty of jokes and stories to");
+    Nick.addBio("share, making him a great choice");
+    Nick.addBio("for tourist contracts.");
+    Nick.setControl(2);
+    Nick.setColor(new Color(102,192,94));
+    //Nick.addSound("theme","https://codehs.com/uploads/46382711eedd6084b9b6a73c0baa494c");
+    Nick.addSound("theme","https://codehs.com/uploads/101b201a08d237ba548b8ce31ffdc7f7");
+    
+    var Test = new Naut();
+    Test.setName("test");
+    Test.addBio("test for naut expansion");
+    color = new Color(0,0,0);
+    Test.setColor(color);
+    
+    NAUTS = [Alex, Colin, Jonny, Lukas, Nick, Test];
+    NAUT = 0;
+    curNaut = NAUTS[NAUT];
+}
+function createCones(){
+    CONES=[];
+    
+    var cone1 = new Part();
+    cone1.setName("Cone1");
+    cone1.setImage("https://codehs.com/uploads/5cfa50d13f105b8930ce7a580f82e484");
+    cone1.setWeight(25);
+    
+    
+    var cone2 = new Part();
+    cone2.setName("Cone2");
+    cone2.setImage("https://codehs.com/uploads/5cfa50d13f105b8930ce7a580f82e484");
+    cone2.setWeight(25);
+    
+    var cone3 = new Part();
+    cone3.setName("Cone3");
+    cone3.setImage("https://codehs.com/uploads/5cfa50d13f105b8930ce7a580f82e484");
+    cone3.setWeight(25);
+    
+    var cone4 = new Part();
+    cone4.setName("Cone4");
+    cone4.setImage("https://codehs.com/uploads/5cfa50d13f105b8930ce7a580f82e484");
+    cone4.setWeight(25);
+    
+    var cone5 = new Part();
+    cone5.setName("Cone5");
+    cone5.setImage("https://codehs.com/uploads/5cfa50d13f105b8930ce7a580f82e484");
+    cone5.setWeight(25);
+    
+    CONES = [cone1,cone2,cone3,cone4,cone5];
+}
+function createCapsules(){
+    CAPSULES=[];
+    
+    var capsule1 = new Part();
+    capsule1.setName("capsule1");
+    capsule1.setImage("https://codehs.com/uploads/eb3c6913ddf5206dacf9e728dc32e7b1");
+    capsule1.setWeight(25);
+    
+    var capsule2 = new Part();
+    capsule2.setName("capsule2");
+    capsule2.setImage("https://codehs.com/uploads/eb3c6913ddf5206dacf9e728dc32e7b1");
+    capsule2.setWeight(25);
+    
+    var capsule3 = new Part();
+    capsule3.setName("capsule3");
+    capsule3.setImage("https://codehs.com/uploads/eb3c6913ddf5206dacf9e728dc32e7b1");
+    capsule3.setWeight(25);
+    
+    var capsule4 = new Part();
+    capsule4.setName("capsule4");
+    capsule4.setImage("https://codehs.com/uploads/eb3c6913ddf5206dacf9e728dc32e7b1");
+    capsule4.setWeight(25);
+    
+    var capsule5 = new Part();
+    capsule5.setName("capsule5");
+    capsule5.setImage("https://codehs.com/uploads/eb3c6913ddf5206dacf9e728dc32e7b1");
+    capsule5.setWeight(25);
+    
+    CAPSULES = [capsule1,capsule2,capsule3,capsule4,capsule5];
+}
+function createPayloads(){
+    PAYLOADS=[];
+    for (var i=0; i<5;i++){
+        var cur = new Part();
+        cur.setName("Payload"+String(i+1));
+        cur.setImage("https://codehs.com/uploads/a02974df4d114712e1eac4d27f5bd65e");
+        cur.setWeight(25);
+        PAYLOADS.push(cur);
+    }
+}
+function createFuels(){
+    FUELS=[];
+    for (var i=0; i<5;i++){
+        var cur = new Part();
+        cur.setName("Fuel"+String(i+1));
+        cur.setImage("https://codehs.com/uploads/0f110c7adde25882e326114e9f543d23");
+        cur.setWeight(25);
+        FUELS.push(cur);
+    }
+}
+function createEngines(){
+    ENGINES=[];
+    for (var i=0; i<5;i++){
+        var cur = new Part();
+        cur.setName("Engine"+String(i+1));
+        cur.setImage("https://codehs.com/uploads/a2002520b4011dca8a3af9ae181c90ef");
+        cur.setWeight(25);
+        cur.setThrust(4350);
+        //cur.setThrust(99999);
+        ENGINES.push(cur);
+    }
+}
+function createRocket(){
+    rocket = new Rocket();
+    
+    rocket.addPart(CONES[0]);
+    rocket.addPart(CAPSULES[0]);
+    rocket.addPart(PAYLOADS[0]);
+    rocket.addPart(FUELS[0]);
+    rocket.addPart(ENGINES[0]);
+    
+    rocket.setTail(9);
+    
+}
+function createPlanets(){
+    PLANETS = [];
+    
+    //Make Earth
+    var Earth = new Planet();
+    Earth.setName("Earth");
+    Earth.setGravity(3);
+    var color = new Color(102,226,242);
+    Earth.setColorSky(color);
+    Earth.setColorGround(Color.green);
+    Earth.setTargetAltitude(408000);
+    Earth.setTargetVx(7667);
+    Earth.setMaxVy(11200);
+    PLANETS.push(Earth);
+    
+    planet = Earth;
+}
+
+//functions to help with classes
+function switchScene(cur, next){
+    next.setActive();
+    cur.setInactive();
+    cur.removeScene();
+    next.printScene();
+    curScene = next;
+}
+function toRadians (angle) {
+  return angle * (Math.PI / 180);
+}
+function cos(angle){
+    return Math.cos(toRadians(angle));
+}
+function sin(angle){
+    return Math.sin(toRadians(angle));
+}
+function abs(value){
+    return Math.abs(value);
+}
+
+//I used these a lot so I made it a function
+//Height/Num
+function H(num){
+    return getHeight()/num;
+}
+function H2(obj, num){
+    try {
+       return obj.getHeight()/num
+    } catch {
+        println("error: H2 parameter doesn't have Height");
+    }
+    return 1;
+}
+//Width/Num
+function W(num){
+    return getWidth()/num;
+}
+function W2(obj, num){
+    try {
+       return obj.getWidth()/num
+    } catch {
+        println("error: W2 parameter doesn't have Width");
+    }
+    return 1;
+}
+//Text, 0=Large, 1=Small
+function T(text,num){
+    var text;
+    switch (num){
+        case 0:
+            text = new Text(text,fontstuff);
+            break;
+        case 1:
+            text = new Text(text,fontstuff2);
+            break;
+        default:
+            text = new Text(text,fontstuff);
+            break;
+    }
+    return text;
+    
+}
+//Add array to the screen
+function printArr(arr){
+    for (var i=0;i<arr.length;i++){
+        var cur = arr[i];
+        add(cur);
+    }
+}
+//Remove array from the screen
+function removeArr(arr){
+    for (var i=0;i<arr.length;i++){
+        var cur = arr[i];
+        remove(cur);
+    }
+}
+//check if an item is visible to the camera
+function checkVisibility(obj){
+    //assume rectangle?
+    //check X values
+    if(obj.getX() > (curScene.getX()+CAMERA_WIDTH/2) || obj.getX()+W2(obj,1) < (curScene.getX()-CAMERA_WIDTH/2)){
+        return false;
+    }
+    //check Y values
+    if(obj.getY() > (curScene.getY()+CAMERA_HEIGHT/3) || obj.getY()+H2(obj,1) < (curScene.getY()-CAMERA_HEIGHT*2/3)){
+        return false;
+    }
+    //if it gets here, its on the screen, return true
+    return true;
+}
+//this creates a new rectangle, which can be added to the scene. this isn't great, but it works
+function rectCopy(rect){
+    var newRect = new Rectangle(rect.getWidth(),rect.getHeight());
+    newRect.setPosition(rect.getX(),rect.getY());
+    newRect.setColor(rect.getColor());
+    newRect.setType(rect.getType());
+    return newRect;
+}
+//checks if it needs to redo that shadowmask if you turn
+function checkShadowMask(){
+    if(!curScene.getLit()){
+        curScene.removeSpecial("shadowMask");
+        curScene.printSpecial("shadowMask");
+    }
+}
+//ajax garbage that probably wont work
+function loadDoc(url, cFunction) {
+    
+    const xhttp = new XMLHttpRequest();
+    xhttp.onload = function() {cFunction(this);}
+    ///*
+    xhttp.open("GET", url);
+    xhttp.send();
+    //*/
+    ///*
+    xhttp.open("POST", url);
+    xhttp.setRequestHeader("Content-type", "text/plain");
+    xhttp.send("Hello World 2");
+    //*/
+    xhttp.open("POST","phpwrite2.php",true);
+    xhttp.setRequestHeader("Content-type","text/plain");
+    xhttp.send("Hello World");
+}
+function myFunction1(xhttp) {
+  // action goes here
+  //println("I think I broke it")
+  
+}
+
+//elem is the click, scene is current scene, menu is the string name, button is the number
+function easybutton(elem,scene,menu,buton){
+    var button = scene.getButton(menu,buton);
+    if(elem == button.getShape()){
+        return true;
+    }
+    var covers = button.getCoversI();
+    for (var i=0;i<covers.length;i++){
+        var cur = covers[i];
+        if(elem == cur){
+            return true;
+        }
+    }
+    covers = button.getCoversT();
+    for (var i=0;i<covers.length;i++){
+        var cur = covers[i];
+        if(elem == cur){
+            return true;
+        }
+    }
+    
+    return false;
+}
+//resets the fonts
+function reloadFont(){
+    fontstuff = String(fontsize-fontconst)+"pt "+font;
+    fontstuff2 = String(fontsize2-fontconst)+"pt "+font;
+    optionScene.removeScene();
+    reloadScenes();
+    reloadExtraScenes();
+    optionScene.printScene();
+}
+
+
+//May god help me write this function
+function gameUpdate(){
+    
+    rocket.updateRocket();
+    var alt = rocket.getAltitude();
+    
+    if(rocket.getVelocityY()<0 && rocket.getAltitude()<-1){
+        stopTimer(gameUpdate);
+        control = false;
+        rocket.setAltitude(-1);
+        var ground = ascentScene.getObject("ground");
+        ground.setPosition(0,H(2)+rocket.getAltitude()+rocket.getDyOffset()+25);
+        var t1 = ascentScene.getText("vtext");
+        t1.setText("I added dying :)");
+        ascentScene.printText("vtext");
+        ascentScene.printMenu("endMenu");
+        curNaut.setLiving(false);
+        return;
+    }
+    
+    
+    //kinematics for accleration
+    var accelY = rocket.getThrustCur()*cos(rocket.getAngle());
+    accelY = accelY + planet.getGravity()*rocket.getWeight();
+    accelY = accelY/rocket.getWeight();
+    
+    //adjust for going every 20ms
+    accelY = accelY*20/1000
+    
+    
+    var vx = (rocket.getThrustCur()/rocket.getWeight())*sin(rocket.getAngle());
+    var vx = vx*20/1000; //adjust for time
+    rocket.setVelocityX(rocket.getVelocityX()+vx);
+    rocket.setVelocityY(rocket.getVelocityY()+accelY);
+    
+    if(rocket.getVelocityY()<0){
+        if(rocket.getAltitude()<0){
+            accelY=0;
+            rocket.setVelocityY(0);
+            rocket.setAltitude(0);
+        }
+    }
+    rocket.setAltitude(rocket.getAltitude()+rocket.getVelocityY()*20/1000);
+    
+    var t1 = ascentScene.getText("altitude");
+    t1.setText("Altitude: "+Math.round((alt/1000)*UNITS[1])+" "+UNITS[4]);
+    var t2 = ascentScene.getText("velocityX");
+    t2.setText("Velocity(X): "+Math.round(rocket.getVelocityX()*UNITS[2])+" "+UNITS[5]);
+    var t3 = ascentScene.getText("velocityY");
+    t3.setText("Velocity(Y): "+Math.round(rocket.getVelocityY()*UNITS[2])+" "+UNITS[5]);   
+   
+    var tAlt = planet.getTargetAltitude();
+    println();
+    var r = 102;
+    var g = 226;
+    var b = 242;
+    if(alt>0){
+        if(alt<tAlt){
+            r = r*(tAlt-alt)/tAlt;
+            g = g*(tAlt-alt)/tAlt;
+            b = b*(tAlt-alt)/tAlt;
+        }
+        else{
+            r = 0;
+            g = 0;
+            b = 0;
+        }
+    }
+    
+    var skycolor = new Color(r,g,b);
+    var background = ascentScene.getObject("background");
+    background.setColor(skycolor);
+    
+    var ground = ascentScene.getObject("ground");
+    ground.setPosition(0,H(2)+rocket.getAltitude()+rocket.getDyOffset()+25);
+
+    
+    if(abs(rocket.getVelocityX())>=planet.getTargetVx() && alt>=planet.getTargetAltitude()){
+        stopTimer(gameUpdate);
+        control = false;
+        var t1 = ascentScene.getText("vtext");
+        t1.setText("You've made it to Orbit!");
+        ascentScene.printMenu("endMenu");
+        ascentScene.printText("vtext");
+    }
+    
+    if(abs(rocket.getVelocityX())>=planet.getTargetVx() && Math.floor(rocket.getAltitude()/1000) == 0){
+        var sonic = new WebImage("https://i.pinimg.com/originals/94/5f/7e/945f7e9968d1da2c0614c9f944961c47.gif");
+        sonic.setPosition(getWidth()/2-200,getHeight()/2-180);
+        add(sonic);
+    }
+    if(abs(rocket.getVelocityY())>planet.getMaxVy()){
+        stopTimer(gameUpdate);
+        control = false;
+        var t1 = ascentScene.getText("vtext");
+        t1.setText("You've reached escape velocity");
+        ascentScene.printText("vtext");
+        ascentScene.printMenu("endMenu");
+    }
+    
+    
+    if(alt>8000 && !CLOUDS.rstrs()){
+        CLOUDS.removeClouds();
+        CLOUDS.setActive(false);
+    }
+    if(alt>10000 && !CLOUDS.rstrs()){
+        //CLOUDS.convertToStars();
+        CLOUDS.setActive(true);
+        rocket.removeRocket();
+        CLOUDS.printClouds();
+        rocket.printRocket();
+    }
+    if(CLOUDS.isActive()){
+        CLOUDS.moveClouds();
+    }
+    
+    
+}
+
+//all this shit needs rewritten when you figure out how to make it work
+//it was written, actually not to bad right now
+function gameUpdate2(){
+    
+    if(!paused){ 
+        
+        //removeLights
+        if(!curScene.getLit()){
+            curScene.removeSpecial("shadowMask");
+        }
+        
+        //longlist of stuff to do
+        curNaut.removeNaut();
+        curNaut.checkCollision();
+        //checkEnemyCollision
+        //checkProjectileCollision
+        
+        curNaut.updateNaut();
+        curScene.removeVisible();
+        
+        //set camera position, check for visible objects
+        curScene.setPosition(curNaut.getX(),curNaut.getY());
+        var obs = curScene.getSceneObjects();
+        var vis = {};
+        for (var cur in obs){
+            var obj = obs[cur];
+            if(checkVisibility(obj)){
+                var newRect = rectCopy(obj);
+                newRect.setPosition(W(2)-curNaut.getX()+newRect.getX(),H(3/2)-curNaut.getY()+newRect.getY());
+                vis[cur] = newRect;
+            }
+        }
+        curScene.updateVisible(vis);
+        
+        //updatelights
+        curScene.printVisible();
+        //removeEnemies
+        //updateEnemies
+        //printEnemies
+        curNaut.printNaut();
+        
+        //printLights
+        if(!curScene.getLit()){
+            curScene.printSpecial("shadowMask");
+        }
+        
+        //removeHud
+        //updateHud
+        //printHud
+    }
+    
+}
+
+//the classes
+class Scene {
+    
+    constructor(){
+        this.cameraX = 0;
+        this.cameraY = 0;
+        this.objects = {};
+        this.texts = {};
+        this.menus = {};
+        this.special = {};
+        this.sceneObjects = {};
+        this.visible = {};
+        this.active = false;
+        this.lit = true;
+    }
+    
+    getObject(name){
+        return this.objects[name];
+    }
+    
+    addObject(name, object){
+        this.objects[name] = object;
+    }
+    getText(name){
+        return this.texts[name];
+    }
+    addText(name, text){
+        this.texts[name] = text;
+    }
+    addMenu(name, menu){
+        this.menus[name] = menu;
+    }
+    getMenu(name){
+        var cur = this.menus[name];
+        return cur.getShape();
+    }
+    getButton(name, num){
+        var cur = this.menus[name];
+        return cur.getButton(num);
+    }
+    addSpecial(name,thing){
+        this.special[name] = thing;
+    }
+    getSpecial(name){
+        return this.special[name];
+    }
+    
+    //Play scene specific things, collsions objects and visibility
+    addSceneObject(name,thing){
+        this.sceneObjects[name] = thing;
+    }
+    getSceneObjects(){
+        return this.sceneObjects;
+    }
+    
+    updateVisible(dict){
+        this.visible = dict;
+    }
+    removeVisible(){
+        for (var vis in this.visible){
+            var cur = this.visible[vis];
+            remove(cur);
+        }
+    }
+    
+    printVisible(){
+        for (var vis in this.visible){
+            var cur = this.visible[vis];
+            add(cur);
+        }
+    }
+    getVisible(){
+        return this.visible;
+    }
+    
+    //active or inactive stuff
+    setActive(){
+        this.active = true;
+    }
+    setInactive(){
+        this.active = false;
+    }
+    isActive(){
+        return this.active;
+    }
+    
+    //camera stuff, for scenes that need it
+    setPosition(x,y){
+        this.cameraX = x;
+        this.cameraY = y;
+    }
+    getX(){
+        return this.cameraX;
+    }
+    getY(){
+        return this.cameraY;
+    }
+    setLit(bool){
+        this.lit = bool;
+    }
+    getLit(){
+        return this.lit;
+    }
+    
+    
+    //printer section
+    printMenu(text){
+        var cur = this.menus[text];
+        cur.printMenu();
+    }
+    removeMenu(text){
+        var cur = this.menus[text];
+        cur.removeMenu();
+    }
+    printText(text){
+        var cur = this.texts[text];
+        add(cur);
+    }
+    removeText(text){
+        var cur = this.texts[text];
+        remove(cur);
+    }
+    printScene(){
+        for(var object in this.objects){
+            var cur = this.objects[object];
+            add(cur);
+        }
+        for(var menu in this.menus){
+            var cur = this.menus[menu];
+            cur.printMenu();
+        }
+        for(var text in this.texts){
+            var cur = this.texts[text];
+            add(cur);
+        }
+    }
+    removeScene(){
+        for(var object in this.objects){
+            var cur = this.objects[object];
+            remove(cur);
+        }
+        for(var menu in this.menus){
+            var cur = this.menus[menu];
+            cur.removeMenu();
+        }
+        for(var text in this.texts){
+            var cur = this.texts[text];
+            remove(cur);
+        }
+        for(var vis in this.visible){
+            var cur = this.visible[vis];
+            remove(cur);
+        }
+    }
+    printSpecial(name){
+        var cur = this.special[name];
+        add(cur);
+    }
+    removeSpecial(name){
+        var cur = this.special[name];
+        remove(cur);
+    }
+    removeSpecials(){
+        for (var i=0;i<this.special.length;i++){
+            var cur = this.special[i];
+            remove(cur);
+        }
+    }
+    clearScene(){
+        this.objects = {};
+        this.texts={};
+        this.menus = {};
+    }
+}
+class Menu {
+    
+    constructor(width,height){
+        this.width = width;
+        this.height = height;
+        this.shape = new Rectangle(width, height);
+        
+        this.buttonsArray = [];
+        this.buttonBuffer = 20;
+        if(width>height){
+            this.direction = 0;
+        }else{
+            this.direction = 1;
+        }
+    }
+    
+    addButton(button){
+        this.buttonsArray.push(button);
+        this.adjustButtons();
+    }
+    addButtons(buttons){
+        for (var i=0;i<buttons.length;i++){
+            var cur = buttons[i];
+            this.buttonsArray.push(cur);
+        }
+        this.adjustButtons();
+    }
+    setColor(color){
+        this.shape.setColor(color);
+    }
+    setPosition(x,y){
+        this.shape.setPosition(x,y);
+        this.adjustButtons();
+    }
+    setBuffer(num){
+        this.buttonBuffer = num;
+        this.adjustButtons();
+    }
+    setDirection(num){
+        // 0 = horizontal
+        // 1 = vertical
+        this.direction = num;
+        this.adjustButtons();
+    }
+    
+    
+    getButton(num){
+        return this.buttonsArray[num];
+    }
+    getX(){
+        return this.shape.getX();
+    }
+    getY(){
+        return this.shape.getY();
+    }
+    getWidth(){
+        return this.width;
+    }
+    getHeight(){
+        return this.height;
+    }
+    getButtons(){
+        return this.buttonsArray;
+    }
+    
+    adjustButtons(){
+        var width = (this.shape.getWidth() - this.buttonBuffer*(this.buttonsArray.length+1))/this.buttonsArray.length;
+        var height = this.shape.getHeight() - this.buttonBuffer*2;
+        var x = this.shape.getX();
+        var y = this.shape.getY();
+        
+        if(this.direction==1){
+            width = this.shape.getWidth() - this.buttonBuffer*2;
+            height = (this.shape.getHeight() - this.buttonBuffer*(this.buttonsArray.length+1))/this.buttonsArray.length;
+        }
+        
+        for(var i=0;i<this.buttonsArray.length;i++){
+            var cur = this.buttonsArray[i];
+            cur.setSize(width,height);
+            if(this.direction == 0){
+                cur.setPosition(x+this.buttonBuffer*(i+1)+width*i,y+this.buttonBuffer);
+            }else{
+                cur.setPosition(x+this.buttonBuffer,y+this.buttonBuffer*(i+1)+height*i);
+            }
+            
+            var covers = cur.getCoversI();
+            for (var n=0;n<covers.length;n++){
+                var cur2 = covers[n];
+                cur2.setSize(width,height);
+                cur2.setPosition(cur.getX(),cur.getY());
+            }
+            covers = cur.getCoversT();
+            for (var n=0;n<covers.length;n++){
+                var cur2 = covers[n];
+                var xx = (width-cur2.getWidth())/2;
+                var yy = (height+cur2.getHeight())/2;
+                cur2.setPosition(cur.getX()+xx,cur.getY()+yy);
+            }
+        }
+    }
+    
+    printMenu(){
+        add(this.shape);
+        for (var n=0;n<this.buttonsArray.length;n++){
+            var cur = this.buttonsArray[n];
+            cur.printButton();
+        }
+    }
+
+    removeMenu(){
+        remove(this.shape);
+        for (var n=0;n<this.buttonsArray.length;n++){
+            var cur = this.buttonsArray[n];
+            cur.removeButton();
+        }
+    }
+}
+class Button {
+    
+    constructor(){
+        this.shape = new Rectangle(0,0);
+        this.color = (Color.grey);
+        
+        this.hascover = false;
+        this.coversT = [];
+        this.coversI = [];
+        
+        this.locked = false;
+        this.selected = false;
+        
+    }
+    
+    addCover(type,cover){
+        this.hasCover = true;
+        var cur = cover;
+        if(type == "image" || type == 0){
+            cur = new WebImage(cover);
+            cur.setSize(this.shape.getWidth(),this.shape.getHeight());
+            cur.setPosition(this.shape.getX(),this.shape.getY());
+            this.coversI.push(cur);
+        }
+        if(type == "text" || type == 1){
+            var x = (this.shape.getWidth()-cur.getWidth())/2;
+            var y = (this.shape.getHeight()-cur.getHeight())/2 + cur.getHeight();
+            cur.setPosition(this.shape.getX()+x,this.shape.getY()+y);
+            this.coversT.push(cur);
+        }
+    }
+    setLocked(bool){
+        this.locked = bool;
+    }
+    setColor(color){
+        this.color = color;
+    }
+    setSelected(bool){
+        this.selected = bool;
+        if(bool==true){
+            this.shape.setColor(Color.red);
+        }
+    }
+    setPosition(x,y){
+        this.shape.setPosition(x,y);
+    }
+    setSize(w,h){
+        var x = this.shape.getX();
+        var y = this.shape.getY();
+        this.shape = new Rectangle(w,h);
+        this.shape.setColor(this.color);
+        this.shape.setPosition(x,y);
+    }
+    
+    getCoversI(){
+        return this.coversI;
+    }
+    getCoversT(){
+        return this.coversT;
+    }
+    getShape(){
+        return this.shape;
+    }
+    getCover(){
+        return this.cover;
+    }
+    locked(){
+        return this.locked;
+    }
+    selected(){
+        return this.selected;
+    }
+    getX(){
+        return this.shape.getX();
+    }
+    getY(){
+        return this.shape.getY();
+    }
+    
+    printButton(){
+        add(this.shape);
+        if(this.hasCover){
+            printArr(this.coversT);
+            printArr(this.coversI);
+        }
+    }
+    removeButton(){
+        remove(this.shape);
+        if(this.hasCover){
+            removeArr(this.coversT);
+            removeArr(this.coversI);
+        }
+    }
+}
+class Slider{
+    
+    constructor(){
+        //make slider
+    }
+    //lol, I'm not writing this shit now
+}
+
+class contract{
+    
+    constructor(){
+        this.company = "Space O";
+        this.short = "";
+        this.objective = "Objective";
+        this.body = [];
+        this.goals = "These are goals";
+        this.cost = 100;
+    }
+    
+    getCompany(){
+        return this.company;
+    }
+    getShort(){
+        return this.short;
+    }
+    getObjective(){
+        return this.objective;
+    }
+    getBody(i){
+        return this.body[i];
+    }
+    getBodyLength(){
+        return this.body.length;
+    }
+    getGoals(){
+        return this.goals;
+    }
+    getCost(){
+        return this.cost;
+    }
+    
+    setCompany(text){
+        this.company = text;
+    }
+    setShort(text){
+        this.short = text;
+    }
+    setObjective(text){
+        this.objective = text;
+    }
+    addBody(text){
+        this.body.push(text);
+    }
+    clearBody(){
+        this.body = [];
+    }
+    setGoals(text){
+        this.goals=text;
+    }
+    setCost(text){
+        this.cost=text;
+    }
+
+}
+class Naut{
+    
+    constructor(){
+        //initial stuff
+        this.name = "";
+        this.bigPic; 
+        this.smallPic;
+        this.bio = [];
+        this.color = new Color(255,0,0);
+        
+        this.control = 1;
+        this.living = true;
+        
+        //sound stuff
+        this.soundLib = new SoundLibrary();
+        this.themePlaying = false;
+        
+        //physics stuff
+        this.X = W(2);
+        this.Y = H(3/2);
+        this.vx = 0;
+        this.vy = 0;
+        this.accel = 2;
+        this.vxMax = 6;
+        this.vxSprint = 12;
+        this.vyMax = 6;
+        this.frameCounter = 0;
+        this.state = "idle";
+        this.tempGunNum = 1;
+        
+        //direction images, probably change this later
+        this.headL = new WebImage("https://codehs.com/uploads/7db5ce8c59049aa3338655c761e6198a");
+        this.headR = new WebImage("https://codehs.com/uploads/edff53d40664b4ccbec37344c653ec96");
+        
+        //for the arm
+        this.armR = new WebImage("https://codehs.com/uploads/bdfbd67dfbad4d80efc64791813c94b7");
+        this.armL = new WebImage("https://codehs.com/uploads/65c146c3a2920a1348b285fbeb6c3d25");
+        
+        //shotgun
+        this.shotgunRight = new WebImage("https://codehs.com/uploads/8c55000aa936f83768396e7502364c9c");
+        this.shotgunLeft = new WebImage("https://codehs.com/uploads/5f4943acaf59d0fc38c86a28719361ee");
+        
+        //animationConst
+        this.direction = "right";
+        //this.curBody = new WebImage("https://codehs.com/uploads/736df3a69cfcc937a37c11b6ff3309d9");
+        //this.curBody = new WebImage("https://codehs.com/uploads/9bfe258f5afff6eded3696e3e38c992e");
+        this.curBody = new WebImage("https://codehs.com/uploads/a9a26dd502cdb216377442fa2f19ed01");
+        this.curHead = this.headR;
+        this.curArm = this.armR;
+        this.curRect = new Rectangle(19,4);
+        
+        //animation cycles
+        this.animations = {};
+        this.idleCycleR = new Animation();
+        this.idleCycleL = new Animation();
+        this.createIdleCycle();
+        this.curAnim = this.idleCycleR;
+        this.walkR = new Animation();
+        this.walkInverseR = new Animation();
+        this.walkL = new Animation();
+        this.walkInverseL = new Animation();
+        this.createWalkCycle();
+        this.jumpCycleR = new Animation();
+        this.jumpCycleL = new Animation();
+        this.createJumpCycle();
+        
+        
+        //Collision checks (true is free, false is blocked)
+        this.downIsClear = false;
+        this.rightIsClear = false;
+        this.leftIsClear = false;
+        this.upIsClear = false;
+        
+    }
+    
+    //Gets
+    getName(){
+        return this.name;
+    }
+    getBigPic(){
+        return this.bigPic;
+    }
+    getSmallPic(){
+        return this.smallPic;
+    }
+    getBio(i){
+        return this.bio[i];
+    }
+    getBioLength(){
+        return this.bio.length;
+    }
+    getControl(){
+        return this.control;
+    }
+    isLiving(){
+        return this.living;
+    }
+    getChest(){
+        return this.chest;
+    }
+    getX(){
+        return this.X;
+    }
+    getY(){
+        return this.Y;
+    }
+    getColor(){
+        return this.color;
+    }
+    getVelocity(){
+        return this.velocity;
+    }
+    getFrameCounter(){
+        return this.frameCounter;
+    }
+    getState(){
+        return this.state;
+    }
+    getDirection(){
+        return this.direction;
+    }
+    
+    //sound things
+    playSound(sound){
+        this.soundLib.playSound(sound);
+    }
+    stopSound(sound){
+        this.soundLib.stopSound(sound);
+    }
+    addSound(name,link){
+        this.soundLib.addSound(name,link);
+    }
+    pauseSound(sound){
+        this.soundLib.pauseSound(sound);
+    }
+    getThemePlaying(){
+        return this.themePlaying;
+    }
+    
+    //Sets
+    setName(name){
+        this.name = name;
+    }
+    setPic(link){
+        this.bigPic = new WebImage(link);
+        this.smallPic = new WebImage(link);
+        this.smallPic.setSize(getWidth()/5,getWidth()/5);
+    }
+    addBio(text){
+        this.bio.push(text);
+    }
+    clearBio(text){
+        this.bio = [];
+    }
+    setControl(num){
+        this.control = num;
+    }
+    setLiving(bool){
+        this.living = bool;
+    }
+    setChest(img){
+        this.chest = new WebImage(img);
+    }
+    setX(num){
+        this.X = num;
+    }
+    setY(num){
+        this.Y = num;
+    }
+    setColor(Color){
+        this.color = Color;
+        this.curRect.setColor(Color);
+        //this.chestBar.setColor(Color);
+        //this.headBar.setColor(Color);
+    }
+    setVelocity(num){
+        this.velocity=num;
+    }
+    setFrameCounter(num){
+        this.frameCounter=num;
+    }
+    setState(state){
+        this.state = state;
+    }
+    setDirection(text){
+        this.direction = text;
+    }
+    
+    setGun(num){
+        this.tempGunNum = num;
+    }
+    
+    //image things
+    createWalkCycle(){
+        /*
+        this.walkCycle.addFrame("https://codehs.com/uploads/81dc99fdc593795ab7a0e3d9352dcf0d");//1
+        this.walkCycle.addFrame("https://codehs.com/uploads/911d1dbbb10155def3f9a312b5779507");//2
+        this.walkCycle.addFrame("https://codehs.com/uploads/2a4d2d89a109fb7d8bbab6cb16ba616b");//3
+        this.walkCycle.addFrame("https://codehs.com/uploads/4d8c6d35e6a819e1136a7decdf927fd7");//4
+        this.walkCycle.addFrame("https://codehs.com/uploads/0f0c7ef66f757c5853353f2c9d448a18");//5
+        this.walkCycle.addFrame("https://codehs.com/uploads/742ee565c6b65e5e5b89bb68ed15d06f");//6
+        this.walkCycle.addFrame("https://codehs.com/uploads/08da4365c7ae24e5354aa1b71bc295fe");//7
+        this.walkCycle.addFrame("https://codehs.com/uploads/8e5926ff6fa61c422baa98cb11c824aa");//8
+        this.walkCycle.addFrame("https://codehs.com/uploads/98a9b4f880eacbb2f0e4cb7c68419a4a");//9
+        */
+        this.walkR.addFrame("https://codehs.com/uploads/e3f45004852746b91c983e699d9d6831");//1
+        this.walkR.addFrame("https://codehs.com/uploads/547846a683e423d79bc38aa4561efafc");//2
+        this.walkR.addFrame("https://codehs.com/uploads/561c7d487cf9fe104b3204b243812d31");//3
+        this.walkR.addFrame("https://codehs.com/uploads/1f9e11003373415c3b73383d455d358b");//4
+        this.walkR.addFrame("https://codehs.com/uploads/99270f7c2a93129f58e2623cf8af1273");//5
+        this.walkR.addFrame("https://codehs.com/uploads/82cd61f63ac6b61a969477f2afcae566");//6
+        this.walkR.addFrame("https://codehs.com/uploads/84e12e5ed8681dce72b404f192981c5d");//7
+        this.walkR.addFrame("https://codehs.com/uploads/465941f70ab4067809e01e3a4bcc110a");//8
+        this.walkR.addFrame("https://codehs.com/uploads/7753ffea17d622f8481b2c438411033b");//9
+        this.animations["walkR"] = this.walkR;
+        
+        this.walkInverseR.addFrame("https://codehs.com/uploads/7753ffea17d622f8481b2c438411033b");//1
+        this.walkInverseR.addFrame("https://codehs.com/uploads/465941f70ab4067809e01e3a4bcc110a");//2
+        this.walkInverseR.addFrame("https://codehs.com/uploads/84e12e5ed8681dce72b404f192981c5d");//3
+        this.walkInverseR.addFrame("https://codehs.com/uploads/82cd61f63ac6b61a969477f2afcae566");//4
+        this.walkInverseR.addFrame("https://codehs.com/uploads/99270f7c2a93129f58e2623cf8af1273");//5
+        this.walkInverseR.addFrame("https://codehs.com/uploads/1f9e11003373415c3b73383d455d358b");//6
+        this.walkInverseR.addFrame("https://codehs.com/uploads/561c7d487cf9fe104b3204b243812d31");//7
+        this.walkInverseR.addFrame("https://codehs.com/uploads/547846a683e423d79bc38aa4561efafc");//8
+        this.walkInverseR.addFrame("https://codehs.com/uploads/e3f45004852746b91c983e699d9d6831");//9
+        this.animations["walkInverseR"] = this.walkInverseR;
+        
+        this.walkL.addFrame("https://codehs.com/uploads/2391e3de9ec2fca97d2a3a2098207d9d");//1
+        this.walkL.addFrame("https://codehs.com/uploads/4bdea4ee684c16c0729638e643258868");//2
+        this.walkL.addFrame("https://codehs.com/uploads/b10c7d9381cc61c1ed6b9e22e6943e81");//3
+        this.walkL.addFrame("https://codehs.com/uploads/b914b4f1beb27c8176a4fbaa9d76cd1f");//4
+        this.walkL.addFrame("https://codehs.com/uploads/646eade6d8f8d057400226e2202f54c5");//5
+        this.walkL.addFrame("https://codehs.com/uploads/2f9640c984b10c2b914a4a5e4fb805af");//6
+        this.walkL.addFrame("https://codehs.com/uploads/d30ce2edd2fde7737245f7dcd2e8fc80");//7
+        this.walkL.addFrame("https://codehs.com/uploads/08810d29d56bd4ccf434ed2b4598ccd6");//8
+        this.walkL.addFrame("https://codehs.com/uploads/06adc3b864489bee6106d832c3976672");//9
+        this.animations["walkL"] = this.walkL;
+        
+        this.walkInverseL.addFrame("https://codehs.com/uploads/06adc3b864489bee6106d832c3976672");//1
+        this.walkInverseL.addFrame("https://codehs.com/uploads/08810d29d56bd4ccf434ed2b4598ccd6");//2
+        this.walkInverseL.addFrame("https://codehs.com/uploads/d30ce2edd2fde7737245f7dcd2e8fc80");//3
+        this.walkInverseL.addFrame("https://codehs.com/uploads/2f9640c984b10c2b914a4a5e4fb805af");//4
+        this.walkInverseL.addFrame("https://codehs.com/uploads/646eade6d8f8d057400226e2202f54c5");//5
+        this.walkInverseL.addFrame("https://codehs.com/uploads/b914b4f1beb27c8176a4fbaa9d76cd1f");//6
+        this.walkInverseL.addFrame("https://codehs.com/uploads/b10c7d9381cc61c1ed6b9e22e6943e81");//7
+        this.walkInverseL.addFrame("https://codehs.com/uploads/4bdea4ee684c16c0729638e643258868");//8
+        this.walkInverseL.addFrame("https://codehs.com/uploads/2391e3de9ec2fca97d2a3a2098207d9d");//9
+        this.animations["walkInverseL"] = this.walkInverseL;
+    }
+    createIdleCycle(){
+        //this.idleCycle.addFrame("https://codehs.com/uploads/736df3a69cfcc937a37c11b6ff3309d9");
+        this.idleCycleR.addFrame("https://codehs.com/uploads/a9a26dd502cdb216377442fa2f19ed01");
+        this.animations["idleR"] = this.idleCycleR; 
+        
+        this.idleCycleL.addFrame("https://codehs.com/uploads/0b3cafb2e930b6ec1e7a8c962781a773");
+        this.animations["idleL"] = this.idleCycleL;
+    }
+    createJumpCycle(){
+        this.jumpCycleR.addFrame("https://codehs.com/uploads/c5d5941fcfc44f3f15c859c4ff1d166e"); //1
+        this.jumpCycleR.addFrame("https://codehs.com/uploads/cdd0bd97b5f2e1b779c3754378d60ccb"); //2
+        this.jumpCycleR.addFrame("https://codehs.com/uploads/4a0d87363f82d948c9f285169ddaae71"); //3
+        this.jumpCycleR.addFrame("https://codehs.com/uploads/07d90c9cd040e308e222ba2c0ea3e58e"); //4
+        this.jumpCycleR.addFrame("https://codehs.com/uploads/d8350f265d76257cf06b559943bef098"); //5
+        this.jumpCycleR.setType("noloop");
+        this.animations["jumpingR"] = this.jumpCycleR;
+        this.animations["inairR"] = this.jumpCycleR;
+        
+        this.jumpCycleL.addFrame("https://codehs.com/uploads/937aab41f746e7d497c2ea43c3239e74"); //1
+        this.jumpCycleL.addFrame("https://codehs.com/uploads/ef1377ee465fea83ecd9445fbae47569"); //2
+        this.jumpCycleL.addFrame("https://codehs.com/uploads/2cf92337ab46c9d5697a06f34b676975"); //3
+        this.jumpCycleL.addFrame("https://codehs.com/uploads/955929ea0e29c4891fe83926b108514d"); //4
+        this.jumpCycleL.addFrame("https://codehs.com/uploads/aebe038435fa73d898e6da03cbfe2676"); //5
+        this.jumpCycleL.setType("noloop");
+        this.animations["jumpingL"] = this.jumpCycleL;
+        this.animations["inairL"] = this.jumpCycleL;
+    }
+    
+    updateNaut(){
+        
+        //movement commands
+        //this.curBody = this.idleCycleR.getFrame(1);
+        if(this.downIsClear){
+            this.vy += planet.getGravity();
+            this.state = "inair";
+        } else {
+            this.vy = 0;
+        }
+       
+        //this section was massively simplified
+        //this stuff only works when on the ground
+        if(!this.downIsClear){
+            
+            
+            //walking animation take 2
+            if(KEYBOARD.isActive(32) && this.upIsClear){
+                //jump if the spacebar is pressed
+                if(this.state != "jumping"){
+                    this.state = "jumping";
+                    this.frameCounter = 1;
+                }
+                this.vy = -20;
+                
+            } else if(KEYBOARD.isActive(68)){
+                //move right if the 'd' key is pressed
+                this.state = "walk";
+                if(this.direction != "right"){
+                    this.state += "Inverse";
+                }
+                //set velocity
+                if(this.vx<0){
+                    this.vx = 0;
+                }
+                if(abs(this.vx) < abs(this.vxMax)){
+                    this.vx += this.accel;
+                }
+                
+                
+            } else if(KEYBOARD.isActive(65)){
+                //move left if the 'a' key is pressed
+                this.state = "walk";
+                if(this.direction == "right"){
+                    this.state += "Inverse";
+                }
+                //set velocity
+                if(this.vx>0){
+                    this.vx = 0;
+                }
+                if(abs(this.vx) < abs(this.vxMax)){
+                    this.vx -= this.accel;
+                }
+                
+                
+            } else {
+                //default to idle state if no key pressed
+                this.state = "idle";
+                this.vx = 0;
+            }
+            
+            
+            
+            
+            
+            
+            /*
+            //direction setting is absolute garbage
+            if(this.direction == "right"){
+            //if shift is pressed
+            if(KEYBOARD.isActive(16)){
+                    
+                    //sprinting stuff
+                    if(KEYBOARD.isActive(32) && this.upIsClear){
+                        
+                        //stuff for jumping
+                        if(this.state != "jumping"){
+                            this.state = "jumping";
+                            this.frameCounter = 1;
+                            this.vy = -20;
+                        }
+                        
+                    } else if(KEYBOARD.isActive(68)&& this.rightIsClear){
+                        
+                        //walking right stuff
+                        if(this.state != "walkingR"){
+                            this.state = "walkingR";
+                            this.frameCounter = 5;
+                        }
+                        
+                        //nextFrame
+                        this.frameCounter += 1;
+                        
+                        //reset frameCounter if it goes over the limit
+                        if(this.frameCounter > this.walkCycleR.getNumFrames()){
+                            this.frameCounter = 1;
+                        }
+                        
+                        //setFrame
+                        this.curBody = this.walkCycleR.getFrame(this.frameCounter);
+                        
+                        //set velocity
+                        if(this.vx<0){
+                            this.vx = 0;
+                        }
+                        if(abs(this.vx) < abs(this.vxSprint)){
+                            this.vx += this.accel;
+                        }
+                        
+                    } else if(KEYBOARD.isActive(65) && this.leftIsClear){
+                        
+                        //walking left stuff
+                        if(this.state != "walkingL"){
+                            this.state = "walkingL";
+                            this.frameCounter = 5;
+                        }
+                        
+                        //nextFrame
+                        this.frameCounter -= 1;
+                        
+                        //reset frameCounter if it goes under the limit
+                        if(this.frameCounter <= 0){
+                            this.frameCounter = this.walkCycleR.getNumFrames();
+                        }
+                        
+                        //setFrame
+                        this.curBody = this.walkCycleR.getFrame(this.frameCounter);
+                        
+                        //set velocity
+                        if(this.vx>0){
+                            this.vx = 0;
+                        }
+                        if(abs(this.vx) < abs(this.vxSprint)){
+                            this.vx -= this.accel;
+                        }
+                        
+                    } else {
+                        //println("Idle");
+                        this.state = "idle";
+                        this.vx = 0;
+                        this.curBody = this.idleCycleR.getFrame(1);
+                    }
+                    
+                } else { 
+                    
+                    //normal walking
+                    if(KEYBOARD.isActive(32) && this.upIsClear){
+                        
+                        //stuff for jumping
+                        if(this.state != "jumping"){
+                            this.state = "jumping";
+                            this.frameCounter = 1;
+                            this.vy = -20;
+                        }
+                        
+                    } else if(KEYBOARD.isActive(68)&& this.rightIsClear){
+                        
+                        //walking right stuff
+                        if(this.state != "walkingR"){
+                            this.state = "walkingR";
+                            this.frameCounter = 5;
+                        }
+                        
+                        //nextFrame
+                        this.frameCounter += 1;
+                        
+                        //reset frameCounter if it goes over the limit
+                        if(this.frameCounter > this.walkCycleR.getNumFrames()){
+                            this.frameCounter = 1;
+                        }
+                        
+                        //setFrame
+                        this.curBody = this.walkCycleR.getFrame(this.frameCounter);
+                        
+                        //set velocity
+                        if(this.vx<0){
+                            this.vx = 0;
+                        }
+                        if(abs(this.vx) < abs(this.vxMax)){
+                            this.vx += this.accel;
+                        }
+                        
+                    } else if(KEYBOARD.isActive(65) && this.leftIsClear){
+                        
+                        //walking left stuff
+                        if(this.state != "walkingL"){
+                            this.state = "walkingL";
+                            this.frameCounter = 5;
+                        }
+                        
+                        //nextFrame
+                        this.frameCounter -= 1;
+                        
+                        //reset frameCounter if it goes under the limit
+                        if(this.frameCounter <= 0){
+                            this.frameCounter = this.walkCycleR.getNumFrames();
+                        }
+                        
+                        //setFrame
+                        this.curBody = this.walkCycleR.getFrame(this.frameCounter);
+                        
+                        //set velocity
+                        if(this.vx>0){
+                            this.vx = 0;
+                        }
+                        if(abs(this.vx) < abs(this.vxMax)){
+                            this.vx -= this.accel;
+                        }
+                        
+                    } else {
+                        //println("Idle");
+                        this.state = "idle";
+                        this.vx = 0;
+                        this.curBody = this.idleCycleR.getFrame(1);
+                    }
+                }
+            } else {
+                //if shift is pressed
+            if(KEYBOARD.isActive(16)){
+                    
+                    //sprinting stuff
+                    if(KEYBOARD.isActive(32) && this.upIsClear){
+                        
+                        //stuff for jumping
+                        if(this.state != "jumping"){
+                            this.state = "jumping";
+                            this.frameCounter = 1;
+                            this.vy = -20;
+                        }
+                        
+                    } else if(KEYBOARD.isActive(68)&& this.rightIsClear){
+                        
+                        //walking right stuff
+                        if(this.state != "walkingR"){
+                            this.state = "walkingR";
+                            this.frameCounter = 5;
+                        }
+                        
+                        //nextFrame
+                        this.frameCounter -= 1;
+                        
+                        //reset frameCounter if it goes over the limit
+                        if(this.frameCounter <= 0){
+                            this.frameCounter = this.walkCycleL.getNumFrames();
+                        }
+                        
+                        //setFrame
+                        this.curBody = this.walkCycleL.getFrame(this.frameCounter);
+                        
+                        //set velocity
+                        if(this.vx<0){
+                            this.vx = 0;
+                        }
+                        if(abs(this.vx) < abs(this.vxSprint)){
+                            this.vx += this.accel;
+                        }
+                        
+                    } else if(KEYBOARD.isActive(65) && this.leftIsClear){
+                        
+                        //walking left stuff
+                        if(this.state != "walkingL"){
+                            this.state = "walkingL";
+                            this.frameCounter = 5;
+                        }
+                        
+                        //nextFrame
+                        this.frameCounter += 1;
+                        
+                        //reset frameCounter if it goes under the limit
+                        if(this.frameCounter > this.walkCycleL.getNumFrames()){
+                            this.frameCounter = 1;
+                        }
+                        
+                        //setFrame
+                        this.curBody = this.walkCycleL.getFrame(this.frameCounter);
+                        
+                        //set velocity
+                        if(this.vx>0){
+                            this.vx = 0;
+                        }
+                        if(abs(this.vx) < abs(this.vxSprint)){
+                            this.vx -= this.accel;
+                        }
+                        
+                    } else {
+                        //println("Idle");
+                        this.state = "idle";
+                        this.vx = 0;
+                        this.curBody = this.idleCycleL.getFrame(1);
+                    }
+                    
+                } else { 
+                    
+                    //normal walking
+                    if(KEYBOARD.isActive(32) && this.upIsClear){
+                        
+                        //stuff for jumping
+                        if(this.state != "jumping"){
+                            this.state = "jumping";
+                            this.frameCounter = 1;
+                            this.vy = -20;
+                        }
+                        
+                    } else if(KEYBOARD.isActive(68)&& this.rightIsClear){
+                        
+                        //walking right stuff
+                        if(this.state != "walkingR"){
+                            this.state = "walkingR";
+                            this.frameCounter = 5;
+                        }
+                        
+                        //nextFrame
+                        this.frameCounter -= 1;
+                        
+                        //reset frameCounter if it goes over the limit
+                        if(this.frameCounter <= 0){
+                            this.frameCounter = this.walkCycleL.getNumFrames();
+                        }
+                        
+                        //setFrame
+                        this.curBody = this.walkCycleL.getFrame(this.frameCounter);
+                        
+                        //set velocity
+                        if(this.vx<0){
+                            this.vx = 0;
+                        }
+                        if(abs(this.vx) < abs(this.vxMax)){
+                            this.vx += this.accel;
+                        }
+                        
+                    } else if(KEYBOARD.isActive(65) && this.leftIsClear){
+                        
+                        //walking left stuff
+                        if(this.state != "walkingL"){
+                            this.state = "walkingL";
+                            this.frameCounter = 5;
+                        }
+                        
+                        //nextFrame
+                        this.frameCounter += 1;
+                        
+                        //reset frameCounter if it goes under the limit
+                        if(this.frameCounter > this.walkCycleL.getNumFrames()){
+                            this.frameCounter = 1;
+                        }
+                        
+                        //setFrame
+                        this.curBody = this.walkCycleL.getFrame(this.frameCounter);
+                        
+                        //set velocity
+                        if(this.vx>0){
+                            this.vx = 0;
+                        }
+                        if(abs(this.vx) < abs(this.vxMax)){
+                            this.vx -= this.accel;
+                        }
+                        
+                    } else {
+                        //println("Idle");
+                        this.state = "idle";
+                        this.vx = 0;
+                        this.curBody = this.idleCycleL.getFrame(1);
+                    }
+                }
+            }
+        */
+        }
+        
+        if(!this.leftIsClear && this.vx < 0){
+            this.vx = 0;
+        }
+        if(!this.rightIsClear && this.vx > 0){
+            this.vx = 0;
+        }
+        
+        if(this.direction == "right"){
+            var animString = this.state + "R";
+        } else {
+            var animString = this.state + "L";
+        }
+        
+        this.curAnim = this.animations[animString];
+        if(this.curAnim == null){
+            this.curAnim = this.idleCycleR;
+        }
+        //println(animString);
+        
+        [this.frameCounter,this.curBody] = this.curAnim.nextFrame(this.frameCounter);
+        
+        
+        
+        //update position 
+        this.X += this.vx;
+        this.Y += this.vy;
+        
+        
+        //update the body image
+        this.curBody.setPosition(W(2)-W2(this.curBody,2),H(3/2)-H2(this.curBody,1));
+        
+        //update the head
+        this.curHead.setPosition(this.curBody.getX()+20,this.curBody.getY()+4);
+        if(MOUSE_ANGLE > 45){
+            this.curHead.setRotation(45);
+        } else if(MOUSE_ANGLE < -45){
+            this.curHead.setRotation(-45);
+        } else {
+            this.curHead.setRotation(MOUSE_ANGLE);
+        }
+        
+        //update belt rectangle
+        if(this.direction == "right"){
+            this.curRect.setPosition(this.curBody.getX()+22,this.curBody.getY()+72);
+        } else {
+            this.curRect.setPosition(this.curBody.getX()+23,this.curBody.getY()+72);
+        }
+        
+        
+        //updateArm
+        if(this.direction == "right"){
+            if(this.tempGunNum == 1){
+                this.curArm = this.armR;
+                this.curArm.setPosition(this.curBody.getX()+18,this.curBody.getY()+20);
+            } else{
+                this.curArm = this.shotgunRight;
+                this.curArm.setPosition(this.curBody.getX()+10,this.curBody.getY());
+                this.curArm.setRotation(MOUSE_ANGLE-90);
+            }
+        } else {
+            if(this.tempGunNum == 1){
+                this.curArm = this.armL;
+                this.curArm.setPosition(this.curBody.getX()+25,this.curBody.getY()+20);
+            } else {
+                this.curArm = this.shotgunLeft;
+                this.curArm.setPosition(this.curBody.getX()+10,this.curBody.getY());
+                this.curArm.setRotation(MOUSE_ANGLE+90);
+            }
+        }
+        
+        
+    }
+    checkCollision(){
+        
+        //the naming convention in this section is absolute garbage
+        //god bless .setType(), it has made this section much better
+        //set all to initially be clear
+        this.downIsClear = true;
+        this.rightIsClear = true;
+        this.leftIsClear = true;
+        this.upIsClear = true;
+        
+        
+        //look for ground elem
+        if(this.downIsClear && this.vy > 0){
+            if(H(3/2)+this.vy >= CAMERA_HEIGHT){
+                var groundCheck = getElementAt(W(2),H(1));
+            } else {
+                var groundCheck = getElementAt(W(2),H(3/2) + this.vy);
+            }
+        } else {
+            var groundCheck = getElementAt(W(2),H(3/2));
+        }
+        if(groundCheck.getType() == "C"){
+            this.downIsClear = false;
+                
+            //lol, this might actually work, set character to obj Y
+            var colObjs = curScene.getVisible();
+            for(var cur in colObjs){
+                if(groundCheck == colObjs[cur]){
+                    var actualObjects = curScene.getSceneObjects();
+                    var actualObject = actualObjects[cur];
+                    this.Y = actualObject.getY()+1;
+                }
+            }
+        }
+        
+        //look for left elem
+        var leftCheck = getElementAt(W(2)-W2(this.curBody,2),H(2));
+        if(leftCheck.getType() == "C"){
+            this.leftIsClear = false;
+        }
+        
+        //look for right elem
+        var rightCheck = getElementAt(W(2)+W2(this.curBody,2),H(2));
+        if(rightCheck.getType() == "C"){
+            this.rightIsClear = false;
+        }
+        
+        //look for up elem
+        var upCheck = getElementAt(W(2),H(3/2)-H2(this.curBody,1));
+        if(upCheck.getType() == "C"){
+            this.upIsClear = false;
+        }
+        
+        
+        /*
+        var obs = curScene.getVisibleCollision();
+        for(var obj in obs){
+    
+            //cur = object in visible
+            var cur = obs[obj];
+            
+            //check if ground
+            if(groundCheck == cur){
+                
+                //set to false
+                this.inAir = false;
+                
+                //lol, this might actually work, set character to obj Y
+                var colObjs = curScene.getCollisionObjects();
+                var colObj = colObjs[obj]
+                this.Y = colObj.getY()+1;
+            }
+            
+            //check if left blocked
+            if(leftCheck == cur){
+                //this.leftIsClear = false;
+            }
+            
+            //check if right blocked
+            if(rightCheck == cur){
+                this.rightIsClear = false;
+            }
+            
+            //check is up is clear
+            if(upCheck == cur){
+                this.upIsClear = false;
+            }
+        }*/
+    }
+    flip(){
+        this.removeNaut();
+        if(this.direction == "left"){
+            this.curHead = this.headL;
+        } else {
+            this.curHead = this.headR;
+        }
+        this.updateNaut();
+        this.printNaut();
+    }
+    
+    printNaut(){
+        add(this.curBody);
+        add(this.curHead);
+        add(this.curRect);
+        add(this.curArm);
+    }
+    removeNaut(){
+        remove(this.curBody);
+        remove(this.curHead);
+        remove(this.curRect);
+        remove(this.curArm);
+    }
+}
+class Part{
+    constructor(){
+        this.name = name;
+        this.image;
+        this.weight =25;
+        this.aero;
+        this.canEject = false;
+        this.thrust=0;
+        this.height=25;
+    }
+    
+    setName(text){
+        this.name = text;
+    }
+    setImage(link){
+        this.image = new WebImage(link);
+    }
+    setWeight(weight){
+        this.weight = weight;
+    }
+    setAero(num){
+        this.aero = num;
+    }
+    setEject(bool){
+        this.canEject = bool;
+    }
+    setThrust(num){
+        this.thrust=num;
+    }
+    setPosition(x,y){
+        this.image.setPosition(x,y);
+    }
+    setRotation(rot){
+        this.image.setRotation(rot);
+    }
+    
+    getName(){
+        return this.name;
+    }
+    getImage(){
+        return this.image;
+    }
+    getWeight(){
+        return this.weight;
+    }
+    getAero(){
+        return this.aero;
+    }
+    getEject(){
+        return this.canEject;
+    }
+    getThrust(){
+        return this.thrust;
+    }
+    getHeight(){
+        return this.height;
+    }
+    getWidth(){
+        return this.height;
+    }
+    getX(){
+        return this.image.getX();
+    }
+    getY(){
+        return this.image.getY();
+    }
+    
+    
+}
+class Rocket{
+    constructor(){
+        
+        this.parts= [];
+        this.rotateConst=0; 
+        this.rotateSpeed=2;
+        this.angle=0;
+        this.thrustMax=0;
+        this.thrustCur=0;;
+        this.velocityY=0;
+        this.velocityX=0;
+        this.altitude=0;
+        this.dyOffset;
+        this.height;
+        this.weight;
+        this.tail = [];
+    }
+    //SETTER FUNCTIONS
+    setPart(part,partnum){
+        this.parts[partnum] = part;             //SETS AN EXISTING PART TO A NEW PART
+        this.setWeight(); //recalculate the weight
+        this.setHeight(); //recalculate height
+        this.setThrustMax(); //recalculate thrust
+    }
+    setPosition(x,y){
+        for (var i=0;i<this.parts.length;i++){
+            var cur = this.parts[i];            //SETS THE POSITION OF THE IMAGES
+            cur.setPosition(x,y+25*i);
+        }
+    }
+    setRotateConst(num){
+        this.rotateConst=num;
+    }
+    setRotateSpeed(num){
+        this.rotateSpeed=num;
+    }
+    setThrustMax(){
+        this.thrustMax = 0;
+        for(var i=0;i<this.parts.length;i++){
+            var cur = this.parts[i];
+            this.thrustMax += cur.getThrust();
+        }
+    }
+    setThrustCur(num){
+        this.thrustCur = this.thrustMax*num;
+    }
+    setVelocityY(num){
+        this.velocityY = num;
+    }
+    setVelocityX(num){
+        this.velocityX = num;
+    }
+    setAltitude(num){
+        this.altitude = num;
+    }
+    setDyOffset(){
+        this.dyOffset = this.getLowestPoint()-H(2);
+    }
+    setHeight(){
+        
+        //clear height
+        this.height = 0;
+        
+        //add height of each part
+        for (var i=0; i<this.parts.length;i++){
+            var cur = this.parts[i];
+            this.height += cur.getHeight();
+        }
+    }
+    setWeight(){
+        
+        //clear weight
+        this.weight = 0; 
+        
+        //add weight of each part
+        for (var i=0; i<this.parts.length;i++){
+            var cur = this.parts[i];
+            this.weight += cur.getWeight();         
+        }
+        
+    }
+    setTail(num){
+        var lastPart = this.parts[this.parts.length-1];
+        var trailColor;
+        var colorConst = 255/num;
+        for(var i=0;i<num;i++){
+            if(i==0){
+                var cur = new Circle(lastPart.getHeight()/2);
+            }
+            else{
+                var cur = new Circle(9);
+            }
+            cur.setPosition(lastPart.getX(),lastPart.getY());
+            trailColor = new Color(255,i*colorConst,0);
+            cur.setColor(trailColor);
+            this.tail.push(cur);
+        }
+    }
+
+    
+    //GETTER FUNCTIONS
+    getRocketArray(){
+        return this.parts;
+    }
+    getRotateSpeed(){
+        return this.rotateSpeed;
+    }
+    getThrustMax(){
+        return this.thrustMax;
+    }
+    getThrustCur(){
+        return this.thrustCur;
+    }
+    getVelocityY(){
+        return this.velocityY;
+    }
+    getVelocityX(){
+        return this.velocityX;
+    }
+    getAngle(){
+        return this.angle;
+    }
+    getAltitude(){
+        return this.altitude;
+    }
+    getDyOffset(){
+        this.setDyOffset();
+        return this.dyOffset;
+    }
+    getHeight(){
+        return this.height-25;
+    }
+    getWeight(){
+        return this.weight;
+    }
+    getLowestPoint(){
+        if(this.parts.length>0){
+            var part = this.parts[0];
+            var top = part.getY()-part.getHeight()/2;
+            part = this.parts[this.parts.length-1];
+            var bottom = part.getY();
+            if(top>bottom){
+                return top;
+            }
+            else{
+                return bottom;
+            }
+        }
+        else{
+            return 0
+        }
+    }
+    
+    //ADDS PART TO THE ROCKET
+    addPart(part){
+        this.parts.push(part);
+        this.setWeight(); //recalculate weight
+        this.setHeight(); //recalculate height
+        this.setThrustMax(); // recalculate thrust
+    }
+    //REMOVES ALL PARTS FROM THE ROCKET
+    clearRocket(){
+        this.parts = [];
+    }
+    
+    //PRINTS THE ROCKET TO THE SCENE
+    printRocket(){
+        for(var i=0;i<this.tail.length;i++){
+            var cur = this.tail[i];
+            if(i!=0){
+                add(cur);
+            }
+        }
+        for (var i=0;i<this.parts.length;i++){
+            var cur = this.parts[i];
+            add(cur.getImage());
+        }
+    }
+    //REMOVES FROM SCENE, DOES NOT CLEAR ROCKET
+    removeRocket(){
+        for(var i=0;i<this.parts.length;i++){
+            var cur = this.parts[i];
+            remove(cur.getImage());
+        }
+        for (var i=0;i<this.tail.length;i++){
+            var cur = this.tail[i];
+            remove(cur);
+        }
+    }
+    
+    //SETS THE ROTATE ANGLE FOR USE IN UPDATE
+    rotate(){
+        this.angle+=this.rotateConst*curNaut.getControl();
+    }
+    
+    //THIS IS RESPONSIBLE FOR PUTTING THE WEBIMAGES IN THE RIGHT SPOT & ROTATION
+    updateRocket(){
+        var height = -25; //center offset for the rocket
+        this.rotate() //get new value for angle
+        
+        for(var i=0;i<this.parts.length;i++){
+            
+            var cur = this.parts[i];     //current part
+            
+            cur.setRotation(this.angle); //rotate the part
+            
+            var x = getWidth()/2-height*sin(this.angle);
+            var y = getHeight()/2+height*cos(this.angle); //set part position
+            cur.setPosition(x,y);
+            
+            height += cur.getHeight(); //offset next part
+        }
+        this.updateTail();
+    }
+    updateTail(){
+        var lastPart = this.parts[this.parts.length-1];
+        var x = lastPart.getX()+lastPart.getWidth()/2;
+        var y = lastPart.getY()+lastPart.getHeight()/2;
+        for(var i=0;i<this.tail.length;i++){
+            var cur = this.tail[i];
+            x = x + cos(this.angle)*this.rotateConst*curNaut.getControl()/3;
+            y = y + sin(this.angle)*this.rotateConst*curNaut.getControl()/3;
+            cur.setPosition(x+Randomizer.nextFloat(-1/2,1/2),y+Randomizer.nextFloat(-1/2,1/2));
+            if(i!=0){
+                cur.setRadius((Math.sqrt(9*9/i))*this.thrustCur/this.thrustMax);
+            }
+            x = cur.getX()-cur.getRadius()*sin(this.angle);
+            y = cur.getY()+cur.getRadius()*cos(this.angle);
+        }
+    }
+    
+    //RESETS THE VALUES FOR NEXT LAUNCH
+    resetValues(){
+        this.angle=0;
+        this.thrustCur=0;
+        this.velocityY=0;
+        this.velocityX=0;
+        this.altitude=0;
+        this.rotateConst=0;
+    }
+}
+class Planet{
+    constructor(){
+        this.name;
+        this.gravity;
+        this.colorSky;
+        this.colorGround;
+        this.targetAltitude;
+        this.targetVx;
+        this.maxVy;
+    }
+    
+    //GETTER functions
+    getName(){
+        return this.name;
+    }
+    getGravity(){
+        return this.gravity;
+    }
+    getColorSky(){
+        return this.colorSky;
+    }
+    getColorGround(){
+        return this.colorGround;
+    }
+    getTargetAltitude(){
+        return this.targetAltitude;
+    }
+    getTargetVx(){
+        return this.targetVx;
+    }
+    getMaxVy(){
+        return this.maxVy;
+    }
+    
+    //SETTER FUNCTIONS
+    setName(str){
+        this.name = str;
+    }
+    setGravity(num){
+        this.gravity = num;
+    }
+    setColorSky(color){
+        this.colorSky = color;
+    }
+    setColorGround(color){
+        this.colorGround = color;
+    }
+    setTargetAltitude(num){
+        this.targetAltitude = num;
+    }
+    setTargetVx(num){
+        this.targetVx = num;
+    }
+    setMaxVy(num){
+        this.maxVy = num;
+    }
+}
+
+
+class Clouds{
+   
+    constructor(){
+        this.clouds=[];
+        this.active = true;
+        this.rstars = false;
+    }
+    
+    addCloud(cloud){
+        this.clouds.push(cloud);
+    }
+    moveClouds(){
+        for (var i=0;i<this.clouds.length;i++){
+            var cur = this.clouds[i];
+            var x = cur.getX()+cur.getSpeed()-rocket.getVelocityX()*20/1000*abs(cur.getSpeed())+cur.getSpeed();;
+            if(x>W(1)){
+                x = 0 - cur.getWidth();
+            }
+            if(x<0-cur.getWidth()){
+                x = W(1);
+            }
+            var y = cur.getY()+rocket.getVelocityY()*20/1000*abs(cur.getSpeed());
+            if(y+cur.getHeight()>H(5)*4){
+                cur.removeCloud();
+                cur = new Cloud();
+                cur.setPosition(cur.getX(),-cur.getHeight());
+                this.clouds[i]=cur;
+                cur.printCloud();
+                rocket.removeRocket();
+                rocket.printRocket();
+                continue;
+            }
+            cur.setPosition(x,y);
+        }
+    }
+    
+    convertToStars(){
+        this.rstars = true;
+        for (var i=0;i<this.clouds.length;i++){
+            var cur = this.clouds[i];
+            var neu = new Rectangle(2,2);
+            neu.setColor(Color.white);
+            neu.setPosition(cur.getX(),cur.getY());
+            this.clouds[i] = neu;
+        }
+    }
+    
+    setActive(bool){
+        this.active = bool;
+    }
+    isActive(){
+        return this.active;
+    }
+    rstrs(){
+        return this.rstars;
+    }
+    
+    printClouds(){
+        for (var i=0;i<this.clouds.length;i++){
+            var cur = this.clouds[i];
+            cur.printCloud();
+        }
+    }
+    removeClouds(){
+        for (var i=0;i<this.clouds.length;i++){
+            var cur = this.clouds[i];
+            cur.removeCloud();
+        }
+    }
+}
+class Cloud{
+    constructor(){
+        var wdth = Randomizer.nextInt(50,200);
+        var shpe = new Rectangle(wdth,wdth*Randomizer.nextFloat(.3,.6));
+        shpe.setColor(Color.white);
+        shpe.setPosition(Randomizer.nextInt(0,W(1)),Randomizer.nextInt(0,H(1)-H(5))-50);
+        this.shape = shpe;
+        var sped = wdth/400;
+        if(Randomizer.nextBoolean()){
+            sped=-sped;
+        }
+        this.speed = sped;
+    }
+    
+    getShape(){
+        return this.shape;
+    }
+    getSpeed(){
+        return this.speed;
+    }
+    getX(){
+        return this.shape.getX();
+    }
+    getY(){
+        return this.shape.getY();
+    }
+    getWidth(){
+        return this.shape.getWidth();
+    }
+    getHeight(){
+        return this.shape.getHeight();
+    }
+    
+    setPosition(x,y){
+        this.shape.setPosition(x,y);
+    }
+    
+    printCloud(){
+        add(this.shape);
+    }
+    removeCloud(){
+        remove(this.shape);
+    }
+}
+class Animation{
+    constructor(){
+        this.numFrames = 0;
+        this.arr = [];
+        this.type = "loop";
+    }
+    setType(type){
+        this.type = type;
+    }
+    getType(){
+        return this.type;
+    }
+    
+    addFrame(img){
+        this.numFrames += 1;
+        var frame = new WebImage(img);
+        this.arr.push(frame);
+    }
+    getFrame(num){
+        if(num > this.numFrames){
+            println("error in animation frame number" + this.numFrames + " " + num);
+            return this.arr[0];
+        }
+        return this.arr[num-1];
+    }
+    nextFrame(curNum){
+        var nextNum = curNum + 1;
+        if (nextNum > this.numFrames){
+            if(this.type == "loop"){
+                nextNum = 1;
+            } else {
+                nextNum = curNum;
+            }
+        }
+        return [nextNum, this.getFrame(nextNum)];
+    }
+    prevFrame(curNum){
+        var nextNum = curNum - 1;
+        if (nextNum <= 0){
+            nextNum = this.numFrames;
+        }
+        return [nextNum, this.getFrame(nextNum)];
+    }
+    replaceFrame(num,img){
+        var frame = new WebImage(img);
+        this.arr[num-1] = frame;
+    }
+    getNumFrames(){
+        return this.numFrames;
+    }
+}
+
+
+//keyboard tracker, this means inputs aren't instant but instead occur during frame updates
+//I have no idea if this is a good idea or not
+class Key{
+    //0 = 48  --> 9 = 57
+    //a = 65  --> z = 90
+    //space = 32
+    //escape = 27
+    //shift = 16
+    //ctrl = 17
+    //alt = 18
+    //f4 = 115
+    constructor(num){
+        this.active = false;
+        this.keyNum = num;
+    }
+    
+    //set Key active or inactive
+    setActive(bool){
+        this.active = bool;
+    }
+    
+    //get if key is active or 
+    isActive(){
+        return this.active;
+    }
+}
+class PersistantKeyboard{
+    constructor(){
+        this.keys = {};
+    }
+    
+    //add key to the keyboard
+    addKey(num){
+        var key = new Key(num);
+        this.keys[String(num)] = key;
+    }
+    
+    //set a key to active or inactive
+    setActive(num, bool){
+        var key = this.keys[String(num)];
+        if(key != null){
+            key.setActive(bool);
+            //println(String(num)+" is changed");
+        }
+    }
+    
+    //check if a key is pressed (active) or not
+    isActive(num){
+        var key = this.keys[String(num)];
+        if(key != null){
+            return key.isActive();
+        }
+    }
+}
+//also this is here too
+class SoundLibrary{
+    constructor(){
+        this.library = {};
+    }
+    addSound(name,link){
+        //var song = new Audio("https://codehs.com/uploads/cdd21e17ae846f5430e9e2218c296636");
+        var song = new Audio(link);
+        this.library[name] = song;
+    }
+    playSound(name){
+        var cur = this.library[name];
+        if(cur != null){
+            cur.volume = V_MUSIC;
+            cur.play();
+        }
+    }
+    stopSound(name){
+        var cur = this.library[name];
+        if(cur != null){
+            cur.pause();
+            cur.currentTime = 0;
+        }
+    }
+    pauseSound(name){
+        var cur = this.library[name];
+        if(cur != null){
+            cur.pause();
+        }
+    }
+}
+class Light{
+    constructor(){
+        this.angle = 30;
+        this.brightness = 255;
+        this.X = 0;
+        this.Y = 0;
+    }
+    
+    
+}
+
+
+
+
+
+
+
+//scroll buffer
+};
+</script>
+
+</body>
+</html>
