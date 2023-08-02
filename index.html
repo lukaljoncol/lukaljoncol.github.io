@@ -2,6 +2,9 @@
 <html>
 <html lang="en-us">
   <head>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 
 <script type="text/javascript" src="https://static.codehs.com/gulp/2d63cb97de353fa9c97e1add21e2af6d19f566c3/chs-js-lib/chs.js"></script>
@@ -19,8 +22,40 @@ canvas {
 
 </head>
 
-<body>
+<body class="d-flex flex-column min-vh-100">
+<div class="container-fluid">
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <div class="container-fluid">
+    <span class="navbar-brand" href="#">welcome to the site</span>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarText">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="index.html">Home</a>
+        </li>
+	<li class="nav-item">
+          <a class="nav-link disabled" href="games.html">Games</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link disabled" href="kurgerbing.html">Adventures of Kurger Bing Man</a>
+        </li>
+      </ul>
+      <span class="navbar-text">
+        look around some
+      </span>
+    </div>
+  </div>
+</nav>
+
+<!-- Old header
 <p style="text-align: center;"><span style='font-family: "Arial Black", Gadget, sans-serif; font-size: 36px; color: rgb(61, 142, 185);'>welcome to the site</span></p>
+<p style="text-align: center;"><span style="color: rgb(61, 142, 185);"><strong><span style="font-family: 'Arial Black', Gadget, sans-serif;">look around some</span></strong></span></p>
+-->
+
 <!--
 <p>Jon needs this,
 	function PO =start()
@@ -33,9 +68,76 @@ canvas {
 end
 </p>
 -->
-<p style="text-align: center;"><span style="color: rgb(61, 142, 185);"><strong><span style="font-family: 'Arial Black', Gadget, sans-serif;">look around some</span></strong></span></p>
+
+<!-- Old description
 	<h3>coming soon is</h3>
 	<h4>life sim, hockey, videos, and more!</h4>
+-->
+
+<!-- Big fuckin' carousel-->
+<div id="myCarousel" class="carousel slide mb-6" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+      <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="0" class="active" aria-label="Slide 1" aria-current="true"></button>
+      <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="1" aria-label="Slide 2" class=""></button>
+      <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="2" aria-label="Slide 3" class=""></button>
+      <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="3" aria-label="Slide 4" class=""></button>
+    </div>
+    <div class="carousel-inner">
+	<div class="carousel-item active">
+        <!--<svg class="bd-placeholder-img" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice" focusable="false"><rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect></svg>-->
+	<img src="lukhockey.png" class="d-block w-20" style="filter:blur(5px);margin:0 auto;;"alt="...">
+        <div class="container">
+          <div class="carousel-caption">
+            <h1 style="color:black;">Luk's Hockey</h1>
+            <p style="color:black;">Challenge your friends to some 1 on 1 hockey.</p>
+            <p><a class="btn btn-lg btn-primary" href="LuksHockey.html">Play Now</a></p>
+          </div>
+        </div>
+      </div>
+    <div class="carousel-item">
+        <!--<svg class="bd-placeholder-img" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice" focusable="false"><rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect></svg>-->
+	<img src="lifesim.png" class="d-block w-20" style="filter:blur(5px);margin:0 auto;;"alt="...">
+        <div class="container">
+          <div class="carousel-caption">
+            <h1 style="color:black;">Life Simulator</h1>
+            <p style="color:black;">Start life again at 18, and do it right this time.</p>
+            <p><a class="btn btn-lg btn-primary" href="lifesim.html">Play Now</a></p>
+          </div>
+        </div>
+	</div>
+      <div class="carousel-item">
+        <!--<svg class="bd-placeholder-img" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice" focusable="false"><rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect></svg>-->
+	<img src="draw.png" class="d-block w-20" style="filter:blur(5px);margin:0 auto;;"alt="...">
+        <div class="container">
+          <div class="carousel-caption">
+            <h1 style="color:black;">Draw</h1>
+            <p style="color:black;">Release your inner artist and become the next Picaso.</p>
+            <p><a class="btn btn-lg btn-primary" href="draw.html">Play Now</a></p>
+          </div>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <!--<svg class="bd-placeholder-img" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice" focusable="false"><rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect></svg>-->
+	<img src="draw.png" class="d-block w-20" style="filter:blur(5px);margin:0 auto;;"alt="...">
+        <div class="container">
+          <div class="carousel-caption">
+            <h1 style="color:black;">Draw</h1>
+            <p style="color:black;">Release your inner artist and become the next Picaso.</p>
+            <p><a class="btn btn-lg btn-primary" href="draw.html">Play Now</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#myCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#myCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+
 
 <a href="lifesim.html">[click here for life simulator 👦]</a>
 <a href="draw.html"> [click here for colin whyte's draw 🎨] </a>
@@ -58,5 +160,14 @@ end
 <img src="https://www.easycounter.com/counter.php?lukaljoncol" border="0" alt="Hit Counters"></a>
 
 <a href="newlifesim.html"> [secret link]</a>
+</div>
+<!-- Footer -->
+<footer class="footer mt-auto py-3 bg-body-tertiary">
+  <div class="container">
+    <span class="text-body-secondary">Made using notepad</span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
 </body>
 </html>
